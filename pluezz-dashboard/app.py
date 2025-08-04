@@ -117,22 +117,31 @@ def dienst_view(dienst):
             flash("Ungültige Anzahl")
             return redirect(url_for("dienst_view", dienst=dienst))
 
-        if anzahl <= len(accounts[dienst]) and anzahl > 0:
+        if 0 < anzahl <= len(accounts[dienst]):
             ausgabe = accounts[dienst][:anzahl]
-
-            if request.form.get("loeschen") == "on":
-                accounts[dienst] = accounts[dienst][anzahl:]
-                save_accounts(accounts)
-                flash(f"{anzahl} Account(s) wurden gelöscht.")
-            else:
-                flash(f"{anzahl} Account(s) wurden ausgegeben.")
-
             return render_template("dienst.html", dienst=dienst, ausgabe=ausgabe, max=len(accounts[dienst]))
         else:
             flash("Nicht genug Accounts auf Lager oder ungültige Anzahl")
             return redirect(url_for("dienst_view", dienst=dienst))
 
     return render_template("dienst.html", dienst=dienst, ausgabe=None, max=len(accounts.get(dienst, [])))
+
+@app.route("/dienst/<dienst>/delete_account", methods=["POST"])
+def delete_account(dienst):
+    if "user" not in session:
+        return redirect(url_for("login"))
+    account_to_delete = request.form.get("account")
+    if not account_to_delete:
+        flash("Kein Account angegeben zum Löschen.")
+        return redirect(url_for("dienst_view", dienst=dienst))
+    accounts = load_accounts()
+    if dienst in accounts and account_to_delete in accounts[dienst]:
+        accounts[dienst].remove(account_to_delete)
+        save_accounts(accounts)
+        flash(f"Account '{account_to_delete}' wurde gelöscht.")
+    else:
+        flash("Account nicht gefunden.")
+    return redirect(url_for("dienst_view", dienst=dienst))
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
