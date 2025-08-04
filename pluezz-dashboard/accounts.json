@@ -1,7 +1,7 @@
 {
     "netflix": [
         "email1@example.com:passwort123",
-        "email2@example.com:passwort456"
+        "email2@example.com:passwort45"
     ],
     "spotify": [
         "email3@example.com:spotifypass"
