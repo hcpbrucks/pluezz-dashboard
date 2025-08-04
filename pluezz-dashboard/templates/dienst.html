@@ -5,23 +5,24 @@
     <title>Dienste Übersicht</title>
 </head>
 <body>
-    <h1>Willkommen, {{ user }}!</h1>
-
-    <h2>Verfügbare Dienste und Accounts</h2>
-    <table border="1" cellpadding="5" cellspacing="0">
-        <tr><th>Dienst</th><th>Verfügbar</th></tr>
-        {% for dienst, anzahl in lager.items() %}
-        <tr><td>{{ dienst }}</td><td>{{ anzahl }}</td></tr>
+    <h1>Willkommen, {{ session.user }}!</h1>
+    <a href="{{ url_for('logout') }}">Logout</a><br>
+    <h2>Verfügbare Dienste und Account-Anzahl</h2>
+    <table border="1" cellpadding="5">
+        <tr><th>Dienst</th><th>Verfügbare Accounts</th></tr>
+        {% for dienst in dienste %}
+        <tr>
+            <td>{{ dienst }}</td>
+            <td>{{ bestand[dienst] }}</td>
+        </tr>
         {% endfor %}
     </table>
-
     <br>
-    <a href="/accounts"><button>Accounts abrufen</button></a><br><br>
+    <a href="{{ url_for('accounts') }}"><button>Accounts abrufen</button></a><br><br>
 
-    {% if admin %}
-    <a href="/admin"><button>Admin Panel</button></a><br><br>
+    {% if session.admin %}
+    <a href="{{ url_for('admin') }}"><button>Admin Panel</button></a><br><br>
+    <a href="{{ url_for('logs') }}"><button>Logs anzeigen</button></a>
     {% endif %}
-
-    <a href="/logout"><button>Logout</button></a>
 </body>
 </html>
