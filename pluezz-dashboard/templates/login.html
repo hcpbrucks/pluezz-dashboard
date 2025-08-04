@@ -8,16 +8,16 @@
     <h1>Login</h1>
     {% with messages = get_flashed_messages() %}
       {% if messages %}
-        <ul style="color:red;">
+        <ul style="color:red">
           {% for msg in messages %}
             <li>{{ msg }}</li>
           {% endfor %}
         </ul>
       {% endif %}
     {% endwith %}
-    <form method="POST" action="/">
-        <label>Benutzername:<br><input type="text" name="username" required></label><br><br>
-        <label>Passwort:<br><input type="password" name="password" required></label><br><br>
+    <form method="POST">
+        Benutzername: <input type="text" name="username" required><br>
+        Passwort: <input type="password" name="password" required><br>
         <button type="submit">Einloggen</button>
     </form>
 </body>
