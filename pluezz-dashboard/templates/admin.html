@@ -21,7 +21,7 @@
         </ul>
 
         <h2>➕ Account hinzufügen</h2>
-        <form method="post" action="{{ url_for('add_account') }}">
+        <form method="post" action="{{ url_for('admin') }}">
             <label for="dienst">Dienst auswählen:</label><br>
             <select name="dienst" id="dienst" required>
                 {% for dienst in dienste %}
@@ -30,19 +30,19 @@
             </select><br><br>
 
             <textarea name="daten" placeholder="E-Mail:Passwort oder Key (jede Zeile ein Account)" required rows="5" cols="40"></textarea><br>
-            <button type="submit">Hinzufügen</button>
+            <button type="submit" name="add_account">Hinzufügen</button>
         </form>
 
         <h2>👤 Benutzer hinzufügen</h2>
-        <form method="post" action="{{ url_for('add_user') }}">
+        <form method="post" action="{{ url_for('admin') }}">
             <input type="text" name="username" placeholder="Benutzername" required><br>
             <input type="password" name="password" placeholder="Passwort" required><br>
             <label><input type="checkbox" name="admin"> Adminrechte</label><br>
-            <button type="submit">Benutzer erstellen</button>
+            <button type="submit" name="add_user">Benutzer erstellen</button>
         </form>
 
         <br>
-        <a href="{{ url_for('dashboard') }}"><button>🔙 Zurück zum Dashboard</button></a>
+        <a href="{{ url_for('dienst') }}"><button>🔙 Zurück zum Dashboard</button></a>
         <a href="{{ url_for('logout') }}"><button>Logout</button></a>
     </div>
 </body>
