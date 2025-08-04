@@ -1,28 +1,87 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8" />
-    <title>Accounts verwalten – Pluezz</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Accounts verwalten</title>
+  <style>
+    body {
+      background: #121212;
+      color: #eee;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 40px;
+    }
+    h1 {
+      color: #4CAF50;
+      text-align: center;
+      margin-bottom: 30px;
+      letter-spacing: 2px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+    }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #333;
+      text-align: left;
+    }
+    th {
+      background-color: #2a5298;
+    }
+    tr:hover {
+      background-color: #333;
+    }
+    form {
+      display: inline;
+    }
+    button.delete-btn {
+      background-color: #ff4c4c;
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: background-color 0.3s ease;
+    }
+    button.delete-btn:hover {
+      background-color: #e03b3b;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📋 Accounts verwalten</h1>
-
-        {% if accounts %}
-            {% for dienst, accs in accounts.items() %}
-                <h2>{{ dienst|capitalize }} ({{ accs|length }} Accounts)</h2>
-                <ul>
-                    {% for account in accs %}
-                        <li>{{ account }} <a href="{{ url_for('delete_account', dienst=dienst, index=loop.index0) }}">❌</a></li>
-                    {% endfor %}
-                </ul>
-            {% endfor %}
-        {% else %}
-            <p>Keine Accounts verfügbar.</p>
-        {% endif %}
-
-        <a href="{{ url_for('dashboard') }}"><button>🔙 Zurück zum Dashboard</button></a>
-    </div>
+  <h1>Accounts verwalten</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Dienst</th>
+        <th>E-Mail</th>
+        <th>Passwort / Key</th>
+        <th>Aktion</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for account in accounts %}
+      <tr>
+        <td>{{ account.service }}</td>
+        <td>{{ account.email }}</td>
+        <td>{{ account.password }}</td>
+        <td>
+          <form method="post" action="/delete_account">
+            <input type="hidden" name="service" value="{{ account.service }}">
+            <input type="hidden" name="email" value="{{ account.email }}">
+            <button type="submit" class="delete-btn">Löschen</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4" style="text-align:center; color:#777;">Keine Accounts verfügbar.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </body>
 </html>
