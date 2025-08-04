@@ -1,4 +1,4 @@
-@import os
+import os
 import json
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,6 +11,7 @@ def home():
     if session.get("user"):
         return redirect(url_for("dashboard"))
     return redirect(url_for("login"))
+
 # Nutzer laden (Passwörter aus Umgebungsvariablen)
 users = {
     "paul": {
@@ -30,7 +31,7 @@ dienste = [
     "adobecc", "canvapremium", "paramountplus"
 ]
 
-# Ladet accounts.json (oder leeres dict)
+# Lade accounts.json (oder leeres dict)
 def load_accounts():
     try:
         with open("accounts.json", "r") as f:
