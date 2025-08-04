@@ -20,63 +20,9 @@
         <form method="post" action="/admin/add_account">
             <label for="dienst">Dienst auswählen:</label><br>
             <select name="dienst" id="dienst" required>
-                <optgroup label="Netflix">
-                    <option value="Netflix">Netflix</option>
-                </optgroup>
-                <optgroup label="Spotify">
-                    <option value="Spotify Single Account">Spotify Single Account</option>
-                    <option value="Spotify Family Account">Spotify Family Account</option>
-                </optgroup>
-                <optgroup label="Disney">
-                    <option value="Disney">Disney</option>
-                </optgroup>
-                <optgroup label="DAZN">
-                    <option value="Dazn">DAZN</option>
-                </optgroup>
-                <optgroup label="Paramount">
-                    <option value="Paramount">Paramount</option>
-                </optgroup>
-                <optgroup label="Prime Video">
-                    <option value="Prime-Video">Prime Video</option>
-                </optgroup>
-                <optgroup label="YouTube Premium">
-                    <option value="YouTube-Premium Single Account">YouTube Premium Single Account</option>
-                    <option value="YouTube-Premium Family Account">YouTube Premium Family Account</option>
-                </optgroup>
-                <optgroup label="Crunchyroll">
-                    <option value="Crunchyroll Fan Account">Crunchyroll Fan Account</option>
-                    <option value="Crunchyroll Megafan Account">Crunchyroll Megafan Account</option>
-                </optgroup>
-                <optgroup label="Steam">
-                    <option value="Steam 0-3 Random Games">Steam 0-3 Random Games on Account</option>
-                    <option value="Steam 4+ Random Games">Steam 4+ Random Games on Account</option>
-                    <option value="Steam Eurotruck Simulator 2">Steam Account with Eurotruck Simulator 2</option>
-                    <option value="Steam Wallpaper Engine">Steam Account with Wallpaper Engine</option>
-                    <option value="Steam Counter Strike">Steam Account with Counter Strike</option>
-                    <option value="Steam Rainbow Six">Steam Account with Rainbow Six</option>
-                    <option value="Steam Supermarket Simulator">Steam Account with Supermarket Simulator</option>
-                    <option value="Steam Red Dead Redemption 2">Steam Account with Red Dead Redemption 2</option>
-                    <option value="Steam Fc 25">Steam Account with Fc 25</option>
-                    <option value="Steam Schedule 1">Steam Account with Schedule 1</option>
-                </optgroup>
-                <optgroup label="GTA">
-                    <option value="GTA-activation-Key">GTA Activation Key</option>
-                </optgroup>
-                <optgroup label="Server Member">
-                    <option value="Server-Member 500">Server Member 500</option>
-                    <option value="Server-Member 1000">Server Member 1000</option>
-                </optgroup>
-                <optgroup label="Server Boost">
-                    <option value="Server-Boost 14x 1 Monat">Server Boost 14x 1 Monat</option>
-                    <option value="Server-Boost 14x 3 Monate">Server Boost 14x 3 Monate</option>
-                </optgroup>
-                <optgroup label="VPN & Tools">
-                    <option value="Nord-Vpn">Nord VPN</option>
-                    <option value="CapCut-Pro">CapCut Pro</option>
-                    <option value="Canva">Canva</option>
-                    <option value="Adobe-Creative-Cloud 1 Monat">Adobe Creative Cloud 1 Monat Key</option>
-                    <option value="Adobe-Creative-Cloud Lifetime">Adobe Creative Cloud Lifetime Account</option>
-                </optgroup>
+                {% for dienst in dienste %}
+                    <option value="{{ dienst }}">{{ dienst }}</option>
+                {% endfor %}
             </select><br><br>
 
             <textarea name="daten" placeholder="E-Mail:Passwort oder Key (jede Zeile ein Account)" required rows="5" cols="40"></textarea><br>
@@ -92,7 +38,8 @@
         </form>
 
         <br>
-        <a href="/dashboard">🔙 Zurück zum Dashboard</a>
+        <a href="/dashboard"><button>🔙 Zurück zum Dashboard</button></a>
+        <a href="/logout"><button>Logout</button></a>
     </div>
 </body>
 </html>
