@@ -1,199 +1,27 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard mit Optionen</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: #0f0f17;
-      background: linear-gradient(135deg, #0f0f17 0%, #1a1a2e 100%);
-      font-family: 'Orbitron', sans-serif;
-      color: #00fff7;
-      text-shadow: 0 0 8px #00fff7;
-      padding: 40px 20px;
-      user-select: none;
-    }
-
-    h1 {
-      font-size: 3rem;
-      margin-bottom: 40px;
-      letter-spacing: 6px;
-      color: #00fff7;
-      text-shadow: 0 0 15px #00fff7, 0 0 25px #00fff7;
-      text-align: center;
-    }
-
-    .services-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 20px;
-      max-width: 900px;
-      margin: 0 auto 60px auto;
-    }
-
-    .service-group {
-      background: rgba(0, 255, 247, 0.1);
-      border-radius: 16px;
-      padding: 15px;
-      box-shadow: 0 0 10px #00fff7aa;
-    }
-
-    .service-group h2 {
-      font-size: 1.4rem;
-      margin-bottom: 12px;
-      color: #00fff7;
-      text-shadow: 0 0 10px #00fff7;
-      text-align: center;
-    }
-
-    .option-button {
-      background: linear-gradient(45deg, #00fff7, #ff00ea);
-      border: none;
-      border-radius: 14px;
-      padding: 15px 10px;
-      font-size: 1rem;
-      font-weight: 700;
-      color: white;
-      cursor: pointer;
-      box-shadow:
-        0 0 10px #00fff7,
-        0 0 20px #ff00ea;
-      text-shadow: 0 0 6px black;
-      margin: 6px auto;
-      display: block;
-      width: 90%;
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .option-button:hover {
-      background: linear-gradient(45deg, #ff00ea, #00fff7);
-      box-shadow:
-        0 0 20px #ff00ea,
-        0 0 30px #00fff7;
-    }
-
-    footer {
-      color: #00fff799;
-      text-align: center;
-      font-size: 0.9rem;
-      user-select: none;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <title>Login – Pluezz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 <body>
-  <h1>Dashboard</h1>
-
-  <div class="services-grid">
-    <div class="service-group">
-      <h2>Spotify</h2>
-      <button class="option-button" onclick="location.href='/spotify/free'">Free Account</button>
-      <button class="option-button" onclick="location.href='/spotify/premium'>Premium Account</button>
+    <div class="container">
+        <h1>Login</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class="flash-messages">
+              {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        <form method="post" action="{{ url_for('login') }}">
+            <input type="text" name="username" placeholder="Benutzername" required><br>
+            <input type="password" name="password" placeholder="Passwort" required><br>
+            <button type="submit">Login</button>
+        </form>
     </div>
-
-    <div class="service-group">
-      <h2>Netflix</h2>
-      <button class="option-button" onclick="location.href='/netflix/basic'">Basic</button>
-      <button class="option-button" onclick="location.href='/netflix/standard'">Standard</button>
-      <button class="option-button" onclick="location.href='/netflix/premium'">Premium</button>
-    </div>
-
-    <div class="service-group">
-      <h2>YouTube Premium</h2>
-      <button class="option-button" onclick="location.href='/youtube/single'">Single Account</button>
-      <button class="option-button" onclick="location.href='/youtube/family'">Family Account</button>
-    </div>
-
-    <div class="service-group">
-      <h2>Disney+</h2>
-      <button class="option-button" onclick="location.href='/disneyplus/basic'">Basic</button>
-      <button class="option-button" onclick="location.href='/disneyplus/premium'">Premium</button>
-    </div>
-
-    <div class="service-group">
-      <h2>GTA</h2>
-      <button class="option-button" onclick="location.href='/gta/standard'">Standard Key</button>
-      <button class="option-button" onclick="location.href='/gta/deluxe'">Deluxe Key</button>
-    </div>
-
-    <div class="service-group">
-      <h2>Crunchyroll</h2>
-      <button class="option-button" onclick="location.href='/crunchyroll/free'">Free</button>
-      <button class="option-button" onclick="location.href='/crunchyroll/premium'">Premium</button>
-    </div>
-
-    <div class="service-group">
-      <h2>DAZN</h2>
-      <button class="option-button" onclick="location.href='/dazn/basic'">Basic</button>
-      <button class="option-button" onclick="location.href='/dazn/premium'">Premium</button>
-    </div>
-
-    <div class="service-group">
-      <h2>NordVPN</h2>
-      <button class="option-button" onclick="location.href='/nordvpn/key'">Key</button>
-      <button class="option-button" onclick="location.href='/nordvpn/account'">Account</button>
-    </div>
-
-    <div class="service-group">
-      <h2>Prime Video</h2>
-      <button class="option-button" onclick="location.href='/primevideo/basic'">Basic</button>
-      <button class="option-button" onclick="location.href='/primevideo/premium'">Premium</button>
-    </div>
-
-    <div class="service-group">
-      <h2>CapCut Pro</h2>
-      <button class="option-button" onclick="location.href='/capcutpro/basic'">Basic</button>
-      <button class="option-button" onclick="location.href='/capcutpro/premium'">Premium</button>
-    </div>
-
-    <div class="service-group">
-      <h2>ChatGPT Plus</h2>
-      <button class="option-button" onclick="location.href='/chatgptplus/basic'">Basic</button>
-      <button class="option-button" onclick="location.href='/chatgptplus/premium'">Premium</button>
-    </div>
-
-    <div class="service-group">
-      <h2>Steam</h2>
-      <button class="option-button" onclick="location.href='/steam/standard'">Standard</button>
-      <button class="option-button" onclick="location.href='/steam/deluxe'">Deluxe</button>
-    </div>
-
-    <div class="service-group">
-      <h2>Adobe Creative Cloud</h2>
-      <button class="option-button" onclick="location.href='/adobe/basic'">Basic</button>
-      <button class="option-button" onclick="location.href='/adobe/premium'">Premium</button>
-    </div>
-
-    <div class="service-group">
-      <h2>Canva Premium</h2>
-      <button class="option-button" onclick="location.href='/canva-premium/basic'">Basic</button>
-      <button class="option-button" onclick="location.href='/canva-premium/premium'">Premium</button>
-    </div>
-
-    <div class="service-group">
-      <h2>Paramount+</h2>
-      <button class="option-button" onclick="location.href='/paramount/basic'">Basic</button>
-      <button class="option-button" onclick="location.href='/paramount/premium'">Premium</button>
-    </div>
-
-    <div class="service-group">
-      <h2>Account Dings</h2>
-      <button class="option-button" onclick="location.href='/account-dings/spotify'">Spotify</button>
-      <button class="option-button" onclick="location.href='/account-dings/netflix'">Netflix</button>
-      <button class="option-button" onclick="location.href='/account-dings/gta'">GTA</button>
-      <!-- Hier kannst du noch mehr hinzufügen -->
-    </div>
-
-    <div class="service-group">
-      <h2>Admin Panel</h2>
-      <button class="option-button" onclick="location.href='/admin-panel'">Admin Dashboard öffnen</button>
-    </div>
-  </div>
-
-  <footer>© 2025 Dein Projektname</footer>
 </body>
 </html>
