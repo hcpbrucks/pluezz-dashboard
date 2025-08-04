@@ -1,126 +1,128 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-import json
 import os
+import json
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "dein_geheimer_schluessel"  # Ändere das zu was Eigenem
+app.secret_key = os.getenv("SECRET_KEY", "dein-geheimer-schluessel")
 
-# Pfade zu deinen JSON-Dateien
-USERS_FILE = "users.json"
-ACCOUNTS_FILE = "accounts.json"
-PRICES_FILE = "prices.json"
+# Nutzer laden (Passwörter aus Umgebungsvariablen)
+users = {
+    "paul": {
+        "password": generate_password_hash(os.getenv("PAUL_PASSWORD", "paulpass")),
+        "admin": True
+    },
+    "elias": {
+        "password": generate_password_hash(os.getenv("ELIAS_PASSWORD", "eliaspass")),
+        "admin": False
+    }
+}
 
-# Lade JSON-Daten
-def load_json(filename):
-    if not os.path.exists(filename):
+# Dienste-Liste (für Dropdown)
+dienste = [
+    "netflix", "spotify", "disneyplus", "gta", "crunchyroll", "youtubepremium",
+    "dazn", "nordvpn", "primevideo", "capcutpro", "chatgptplus", "steam",
+    "adobecc", "canvapremium", "paramountplus"
+]
+
+# Lade accounts.json (oder leeres dict)
+def load_accounts():
+    try:
+        with open("accounts.json", "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
         return {}
-    with open(filename, "r", encoding="utf-8") as f:
-        return json.load(f)
 
-# Speichere JSON-Daten
-def save_json(filename, data):
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
+# Speichere accounts.json
+def save_accounts(accounts):
+    with open("accounts.json", "w") as f:
+        json.dump(accounts, f, indent=4)
 
-# Check Login
-def is_logged_in():
-    return "username" in session
+# Lade users.json (für Admin neu hinzufügen)
+def load_users_file():
+    try:
+        with open("users.json", "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
 
-def is_admin():
-    if not is_logged_in():
-        return False
-    users = load_json(USERS_FILE)
-    username = session["username"]
-    return users.get(username, {}).get("admin", False)
-
-@app.route("/")
-def index():
-    if is_logged_in():
-        return redirect(url_for("dashboard"))
-    return redirect(url_for("login"))
+# Speichere users.json (zusätzlich zu in-memory users)
+def save_users_file(users_file):
+    with open("users.json", "w") as f:
+        json.dump(users_file, f, indent=4)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        users = load_json(USERS_FILE)
+        username = request.form.get("username").lower()
+        password = request.form.get("password")
+        
+        # Zuerst check im hardcodierten users dict (env)
         user = users.get(username)
+        
+        # Wenn nicht gefunden, check in users.json (für neue user)
+        if not user:
+            users_file = load_users_file()
+            if username in users_file:
+                user = users_file[username]
+        
         if user and check_password_hash(user["password"], password):
-            session["username"] = username
-            flash("Erfolgreich eingeloggt!", "success")
+            session["user"] = username
+            session["admin"] = user.get("admin", False)
             return redirect(url_for("dashboard"))
         else:
-            flash("Falscher Benutzername oder Passwort", "error")
+            return render_template("login.html", error="Falscher Benutzername oder Passwort.")
     return render_template("login.html")
+
+@app.route("/dashboard")
+def dashboard():
+    if not session.get("user"):
+        return redirect(url_for("login"))
+    return render_template("dashboard.html", user=session["user"], admin=session["admin"])
 
 @app.route("/logout")
 def logout():
     session.clear()
-    flash("Erfolgreich ausgeloggt.", "info")
     return redirect(url_for("login"))
-
-@app.route("/dashboard")
-def dashboard():
-    if not is_logged_in():
-        return redirect(url_for("login"))
-    # Beispiel: zeige Lagerstatus
-    accounts = load_json(ACCOUNTS_FILE)
-    status = {}
-    for dienst, daten in accounts.items():
-        status[dienst] = len(daten)
-    return render_template("dashboard.html", status=status)
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
-    if not is_admin():
-        flash("Kein Zugriff!", "error")
+    if not session.get("user") or not session.get("admin"):
+        flash("Du hast keine Berechtigung für diesen Bereich.")
         return redirect(url_for("login"))
+    
+    accounts = load_accounts()
+    users_file = load_users_file()
 
-    accounts = load_json(ACCOUNTS_FILE)
-    users = load_json(USERS_FILE)
-    dienste = list(accounts.keys()) if accounts else []
-
-    # Lagerstatus
-    status = {}
-    for dienst, daten in accounts.items():
-        anzahl = len(daten)
-        if anzahl == 0:
-            status[dienst] = "Leer"
-        elif anzahl < 5:
-            status[dienst] = "Nachschub nötig"
-        elif anzahl < 10:
-            status[dienst] = "Knapp"
-        else:
-            status[dienst] = "Auf Lager"
+    # Lagerstatus: zähle Accounts pro Dienst
+    status = {dienst: len(accounts.get(dienst, [])) for dienst in dienste}
 
     if request.method == "POST":
         if "add_account" in request.form:
-            dienst = request.form["dienst"]
-            daten_text = request.form["daten"].strip()
-            if dienst and daten_text:
-                neue_accounts = [line.strip() for line in daten_text.splitlines() if line.strip()]
+            dienst = request.form.get("dienst")
+            daten = request.form.get("daten").strip()
+            if dienst and daten:
+                neue_accounts = [line.strip() for line in daten.splitlines() if line.strip()]
                 if dienst not in accounts:
                     accounts[dienst] = []
                 accounts[dienst].extend(neue_accounts)
-                save_json(ACCOUNTS_FILE, accounts)
-                flash(f"{len(neue_accounts)} Accounts zu {dienst} hinzugefügt.", "success")
+                save_accounts(accounts)
+                flash(f"{len(neue_accounts)} Accounts für {dienst} hinzugefügt.")
                 return redirect(url_for("admin"))
 
         elif "add_user" in request.form:
-            username = request.form["username"].strip()
-            password = request.form["password"].strip()
-            admin_rechte = "admin" in request.form
+            username = request.form.get("username").lower()
+            password = request.form.get("password")
+            admin_rechte = bool(request.form.get("admin"))
             if username and password:
-                if username in users:
-                    flash("Benutzer existiert schon.", "error")
+                if username in users or username in users_file:
+                    flash("Benutzer existiert bereits.")
                 else:
                     hashed_pw = generate_password_hash(password)
-                    users[username] = {"password": hashed_pw, "admin": admin_rechte}
-                    save_json(USERS_FILE, users)
-                    flash(f"Benutzer {username} erstellt.", "success")
-                    return redirect(url_for("admin"))
+                    users_file[username] = {"password": hashed_pw, "admin": admin_rechte}
+                    save_users_file(users_file)
+                    flash(f"Benutzer {username} erfolgreich erstellt.")
+                return redirect(url_for("admin"))
 
     return render_template("admin.html", status=status, dienste=dienste)
 
