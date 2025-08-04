@@ -1,39 +1,45 @@
 import os
-
-# Debug-Ausgabe zum Überprüfen, ob Templates-Ordner und login.html vorhanden sind
-print("Templates folder exists:", os.path.isdir("templates"))
-print("login.html exists:", os.path.isfile(os.path.join("templates", "login.html")))
-
-from flask import Flask, render_template, request, redirect, url_for, session, flash
 import json
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 
-app = Flask(__name__, template_folder="templates", static_folder="static")
-app.secret_key = 'Pluezzzzshop'
+# Absoluter Pfad zum Ordner, in dem die app.py liegt
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-# Nutzer laden
+# Debug-Ausgabe: Prüfen, ob Templates-Ordner und login.html vorhanden sind
+print("Templates folder exists:", os.path.isdir(os.path.join(BASE_DIR, "templates")))
+print("login.html exists:", os.path.isfile(os.path.join(BASE_DIR, "templates", "login.html")))
+
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static")
+)
+
+app.secret_key = 'Pluezzzzshop'  # Dein geheimer Schlüssel für Sessions
+
+# Funktionen zum Laden und Speichern der JSON-Dateien
+
 def load_users():
-    with open("users.json", "r") as f:
+    with open(os.path.join(BASE_DIR, "users.json"), "r") as f:
         return json.load(f)
 
-# Accounts laden
-def load_accounts():
-    with open("accounts.json", "r") as f:
-        return json.load(f)
-
-# Preise laden
-def load_prices():
-    with open("prices.json", "r") as f:
-        return json.load(f)
-
-# Accounts speichern
-def save_accounts(data):
-    with open("accounts.json", "w") as f:
-        json.dump(data, f, indent=4)
-
-# Nutzer speichern
 def save_users(data):
-    with open("users.json", "w") as f:
+    with open(os.path.join(BASE_DIR, "users.json"), "w") as f:
         json.dump(data, f, indent=4)
+
+def load_accounts():
+    with open(os.path.join(BASE_DIR, "accounts.json"), "r") as f:
+        return json.load(f)
+
+def save_accounts(data):
+    with open(os.path.join(BASE_DIR, "accounts.json"), "w") as f:
+        json.dump(data, f, indent=4)
+
+def load_prices():
+    with open(os.path.join(BASE_DIR, "prices.json"), "r") as f:
+        return json.load(f)
+
+# Routen
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -44,7 +50,7 @@ def login():
         for user in users:
             if user["name"] == name and user["password"] == pw:
                 session["user"] = name
-                session["admin"] = user["admin"]
+                session["admin"] = user.get("admin", False)
                 return redirect(url_for("dashboard"))
         flash("Login fehlgeschlagen")
     return render_template("login.html")
@@ -52,7 +58,7 @@ def login():
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
-        return redirect("/")
+        return redirect(url_for("login"))
     accounts = load_accounts()
     stock = {dienst: len(daten) for dienst, daten in accounts.items()}
     return render_template("dashboard.html", stock=stock, is_admin=session.get("admin", False))
@@ -60,10 +66,17 @@ def dashboard():
 @app.route("/dienst/<dienst>", methods=["GET", "POST"])
 def dienst_view(dienst):
     if "user" not in session:
-        return redirect("/")
+        return redirect(url_for("login"))
     accounts = load_accounts()
+    if dienst not in accounts:
+        flash("Dienst nicht gefunden")
+        return redirect(url_for("dashboard"))
     if request.method == "POST":
-        anzahl = int(request.form["anzahl"])
+        try:
+            anzahl = int(request.form["anzahl"])
+        except ValueError:
+            flash("Ungültige Anzahl")
+            return redirect(url_for("dienst_view", dienst=dienst))
         if anzahl <= len(accounts[dienst]):
             ausgabe = accounts[dienst][:anzahl]
             if request.form.get("loeschen"):
@@ -76,8 +89,8 @@ def dienst_view(dienst):
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
-    if "user" not in session or not session.get("admin"):
-        return redirect("/")
+    if "user" not in session or not session.get("admin", False):
+        return redirect(url_for("login"))
     accounts = load_accounts()
     status = {}
     for dienst, daten in accounts.items():
@@ -95,8 +108,8 @@ def admin():
 
 @app.route("/admin/add_account", methods=["POST"])
 def add_account():
-    if "user" not in session or not session.get("admin"):
-        return redirect("/")
+    if "user" not in session or not session.get("admin", False):
+        return redirect(url_for("login"))
     dienst = request.form["dienst"]
     daten = request.form["daten"]
     accounts = load_accounts()
@@ -104,27 +117,26 @@ def add_account():
     accounts.setdefault(dienst, []).extend(neu)
     save_accounts(accounts)
     flash("Account(s) hinzugefügt")
-    return redirect("/admin")
+    return redirect(url_for("admin"))
 
 @app.route("/admin/add_user", methods=["POST"])
 def add_user():
-    if "user" not in session or not session.get("admin"):
-        return redirect("/")
+    if "user" not in session or not session.get("admin", False):
+        return redirect(url_for("login"))
     name = request.form["username"]
     pw = request.form["password"]
-    admin = request.form.get("admin") == "on"
+    admin_flag = request.form.get("admin") == "on"
     users = load_users()
-    users.append({"name": name, "password": pw, "admin": admin})
+    users.append({"name": name, "password": pw, "admin": admin_flag})
     save_users(users)
     flash("Nutzer hinzugefügt")
-    return redirect("/admin")
+    return redirect(url_for("admin"))
 
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect("/")
+    return redirect(url_for("login"))
 
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
