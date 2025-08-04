@@ -11,6 +11,40 @@ app = Flask(
 )
 app.secret_key = 'Pluezzzzshop'
 
+# Liste aller Dienste, die im Dashboard angezeigt werden sollen
+ALLE_DIENSTE = [
+    "Netflix",
+    "Spotify Single Account",
+    "Disney",
+    "Dazn",
+    "Paramount",
+    "Prime-Video",
+    "YouTube-Premium Family",
+    "YouTube-Premium Single Account",
+    "Crunchyroll Fan Account",
+    "Crunchyroll Megafan Account",
+    "Steam 0-3 Random Games",
+    "Steam 4+ Random Games",
+    "Steam Account with Eurotruck Simulator 2",
+    "Steam Account with Wallpaper Engine",
+    "Steam Account with Counter Strike",
+    "Steam Account with Rainbow Six",
+    "Steam Account with Supermarket Simulator",
+    "Steam Account with Red Dead Redemption 2",
+    "Steam Account with FC 25",
+    "Steam Account with Schedule 1",
+    "GTA Activation Key",
+    "Server-Member 500",
+    "Server-Member 1000",
+    "Server-Boost 14x 1 Monat",
+    "Server-Boost 14x 3 Monate",
+    "Nord-Vpn",
+    "CapCut-Pro",
+    "Canva",
+    "Adobe-Creative-Cloud 1 Monat Key",
+    "Adobe-Creative-Cloud Livetime Account"
+]
+
 # Helper-Funktionen für die Daten
 def load_json(path):
     full_path = os.path.join(BASE_DIR, path)
@@ -63,7 +97,12 @@ def dashboard():
     if "user" not in session:
         return redirect(url_for("login"))
     accounts = load_accounts()
-    stock = {dienst: len(daten) for dienst, daten in accounts.items()}
+    stock = {}
+    for dienst in ALLE_DIENSTE:
+        if dienst in accounts and isinstance(accounts[dienst], list):
+            stock[dienst] = len(accounts[dienst])
+        else:
+            stock[dienst] = 0
     return render_template("dashboard.html", stock=stock, is_admin=session.get("admin", False))
 
 # ACCOUNT-ABRUF
