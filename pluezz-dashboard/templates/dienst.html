@@ -22,10 +22,6 @@
         <form method="post">
             <label for="anzahl">Wie viele willst du abrufen? (Max: {{ max }})</label><br />
             <input type="number" id="anzahl" name="anzahl" min="1" max="{{ max }}" required /><br />
-
-            <input type="checkbox" id="loeschen" name="loeschen" />
-            <label for="loeschen">Danach löschen?</label><br />
-
             <button type="submit">Abrufen</button>
         </form>
 
@@ -33,7 +29,13 @@
             <h3>Deine Accounts:</h3>
             <ul>
                 {% for acc in ausgabe %}
-                    <li>{{ acc }}</li>
+                    <li>
+                        {{ acc }}
+                        <form action="{{ url_for('delete_account', dienst=dienst) }}" method="POST" style="display:inline;">
+                            <input type="hidden" name="account" value="{{ acc }}">
+                            <button type="submit">Löschen</button>
+                        </form>
+                    </li>
                 {% endfor %}
             </ul>
         {% endif %}
@@ -41,5 +43,4 @@
         <a href="/dashboard">🔙 Zurück</a>
     </div>
 </body>
-</html>
 </html>
