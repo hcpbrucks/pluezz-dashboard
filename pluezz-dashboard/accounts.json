@@ -1,13 +1,32 @@
 {
-  "Netflix": [
-    "user1@mail.com:pass1",
-    "user2@mail.com:pass2"
-  ],
-  "Spotify Single Account": [
-    "spotify1@mail.com:pass1",
-    "spotify2@mail.com:pass2"
-  ],
-  "GTA Activation Key": [
-    "ABC123-DEF456-GHI789"
-  ]
+  "Netflix": [],
+  "Spotify": [],
+  "Disney": [],
+  "Dazn": [],
+  "Paramount": [],
+  "Prime-Video": [],
+  "YouTube-Premium Family": [],
+  "YouTube-Premium Single Account": [],
+  "Crunchyroll Fan Account": [],
+  "Crunchyroll Megafan Account": [],
+  "Steam 0-3 Random Games": [],
+  "Steam 4+ Random Games": [],
+  "Steam Eurotruck Simulator 2": [],
+  "Steam Wallpaper Engine": [],
+  "Steam Counter Strike": [],
+  "Steam Rainbow Six": [],
+  "Steam Supermarket Simulator": [],
+  "Steam Red Dead Redemption 2": [],
+  "Steam Fc 25": [],
+  "Steam Schedule 1": [],
+  "GTA-activation-Key": [],
+  "Server-Member 500": [],
+  "Server-Member 1000": [],
+  "Server-Boost 14x 1 Monat": [],
+  "Server-Boost 14x 3 Monate": [],
+  "Nord-Vpn": [],
+  "CapCut-Pro": [],
+  "Canva": [],
+  "Adobe-Creative-Cloud 1 Monat key": [],
+  "Adobe-Creative-Cloud Livetime Account": []
 }
