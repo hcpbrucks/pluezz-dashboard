@@ -1,9 +1,8 @@
 import os
 import json
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, session, flash
 
-# Basisverzeichnis (kompatibel mit Replit/Render)
 BASE_DIR = os.getcwd()
 
 app = Flask(
@@ -13,41 +12,19 @@ app = Flask(
 )
 app.secret_key = os.environ.get("SECRET_KEY", "Pluezzzzshop")
 
-# Alle Dienste, die angezeigt werden sollen
+# Alle Dienste
 ALLE_DIENSTE = [
-    "Netflix",
-    "Spotify Single Account",
-    "Disney",
-    "Dazn",
-    "Paramount",
-    "Prime-Video",
-    "YouTube-Premium Family",
-    "YouTube-Premium Single Account",
-    "Crunchyroll Fan Account",
-    "Crunchyroll Megafan Account",
-    "Steam 0-3 Random Games",
-    "Steam 4+ Random Games",
-    "Steam Account with Eurotruck Simulator 2",
-    "Steam Account with Wallpaper Engine",
-    "Steam Account with Counter Strike",
-    "Steam Account with Rainbow Six",
-    "Steam Account with Supermarket Simulator",
-    "Steam Account with Red Dead Redemption 2",
-    "Steam Account with FC 25",
-    "Steam Account with Schedule 1",
-    "GTA Activation Key",
-    "Server-Member 500",
-    "Server-Member 1000",
-    "Server-Boost 14x 1 Monat",
-    "Server-Boost 14x 3 Monate",
-    "Nord-Vpn",
-    "CapCut-Pro",
-    "Canva",
-    "Adobe-Creative-Cloud 1 Monat Key",
-    "Adobe-Creative-Cloud Livetime Account"
+    "Netflix", "Spotify Single Account", "Disney", "Dazn", "Paramount", "Prime-Video",
+    "YouTube-Premium Family", "YouTube-Premium Single Account", "Crunchyroll Fan Account",
+    "Crunchyroll Megafan Account", "Steam 0-3 Random Games", "Steam 4+ Random Games",
+    "Steam Account with Eurotruck Simulator 2", "Steam Account with Wallpaper Engine",
+    "Steam Account with Counter Strike", "Steam Account with Rainbow Six",
+    "Steam Account with Supermarket Simulator", "Steam Account with Red Dead Redemption 2",
+    "Steam Account with FC 25", "Steam Account with Schedule 1", "GTA Activation Key",
+    "Server-Member 500", "Server-Member 1000", "Server-Boost 14x 1 Monat",
+    "Server-Boost 14x 3 Monate", "Nord-Vpn", "CapCut-Pro", "Canva",
+    "Adobe-Creative-Cloud 1 Monat Key", "Adobe-Creative-Cloud Livetime Account"
 ]
-
-# ========== Hilfsfunktionen ==========
 
 def json_laden(dateiname):
     pfad = os.path.join(BASE_DIR, dateiname)
@@ -72,17 +49,31 @@ def log_speichern(user, aktion):
     })
     json_speichern("logs.json", logs)
 
-# ========== Routen ==========
-
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        # Login über Umgebungsvariablen (Paul + Elias)
+        env_users = {
+            "Paul": os.environ.get("PAUL_PASSWORD"),
+            "Elias": os.environ.get("ELIAS_PASSWORD")
+        }
+
+        if username in env_users and password == env_users[username]:
+            session["user"] = username
+            session["admin"] = True  # Beide sind Admin
+            return redirect("/start")
+
+        # Login über users.json (für manuell erstellte User)
         users = json_laden("users.json")
         for user in users:
-            if user["name"] == request.form["username"] and user["password"] == request.form["password"]:
+            if user["name"] == username and user["password"] == password:
                 session["user"] = user["name"]
                 session["admin"] = user.get("admin", False)
                 return redirect("/start")
+
         flash("Login fehlgeschlagen!")
     return render_template("login.html")
 
