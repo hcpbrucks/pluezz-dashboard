@@ -1,1 +1,25 @@
-[] 
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <title>Logs – Pluezz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+    <div class="container">
+        <h1>📜 Logs</h1>
+
+        {% if logs %}
+            <ul>
+                {% for log in logs %}
+                    <li>{{ log }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Keine Logs vorhanden.</p>
+        {% endif %}
+
+        <a href="{{ url_for('dashboard') }}"><button>🔙 Zurück zum Dashboard</button></a>
+    </div>
+</body>
+</html> 
