@@ -2,7 +2,7 @@ import os
 import json
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 
-# Absoluter Pfad zum Ordner, in dem die app.py liegt
+# Absolut Pfad zum Ordner, in dem die app.py liegt
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 # Debug-Ausgabe: Prüfen, ob Templates-Ordner und login.html vorhanden sind
