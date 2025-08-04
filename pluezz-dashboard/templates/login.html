@@ -4,12 +4,72 @@
     <meta charset="UTF-8" />
     <title>Login – Pluezz</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <style>
+        body {
+            background-color: #1e1e2f;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #2c2f48;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.4);
+            width: 300px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 6px;
+            background-color: #3e4059;
+            color: #fff;
+        }
+
+        input::placeholder {
+            color: #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4a90e2;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #357ab7;
+        }
+
+        .error {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>🔐 Login</h1>
         {% if error %}
-            <p style="color: red;">{{ error }}</p>
+            <div class="error">{{ error }}</div>
         {% endif %}
         <form method="post" action="{{ url_for('login') }}">
             <input type="text" name="username" placeholder="Benutzername" required><br>
