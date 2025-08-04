@@ -25,7 +25,7 @@ dienste = [
     "adobecc", "canvapremium", "paramountplus"
 ]
 
-# Lade accounts.json (oder leeres dict)
+# Ladet accounts.json (oder leeres dict)
 def load_accounts():
     try:
         with open("accounts.json", "r") as f:
