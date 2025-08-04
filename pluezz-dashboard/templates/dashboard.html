@@ -7,25 +7,16 @@
 </head>
 <body>
     <div class="container">
-        <h1>📊 Dashboard</h1>
-        <p>Hallo, {{ session.get('user') }}!</p>
+        <h1>Dashboard</h1>
 
-        <h2>Verfügbare Dienste & Bestand</h2>
+        <h2>Lagerstatus</h2>
         <ul>
-            {% if status %}
-                {% for dienst, anzahl in status.items() %}
-                    <li>{{ dienst|capitalize }}: {{ anzahl }} Accounts</li>
-                {% endfor %}
-            {% else %}
-                <li>Keine Daten vorhanden.</li>
-            {% endif %}
+            {% for dienst, anzahl in status.items() %}
+                <li>{{ dienst|capitalize }}: {{ anzahl }} Accounts</li>
+            {% endfor %}
         </ul>
 
-        <a href="{{ url_for('accounts') }}"><button>🔍 Accounts verwalten</button></a>
-        {% if session.get('admin') %}
-            <a href="{{ url_for('admin') }}"><button>⚙️ Adminbereich</button></a>
-            <a href="{{ url_for('logs') }}"><button>📜 Logs anzeigen</button></a>
-        {% endif %}
+        <a href="{{ url_for('admin') }}"><button>Zum Adminbereich</button></a>
         <a href="{{ url_for('logout') }}"><button>Logout</button></a>
     </div>
 </body>
