@@ -95,7 +95,7 @@ def start():
                 log_speichern(session["user"], f"{anzahl}x {dienst} abgerufen & gelöscht")
             else:
                 log_speichern(session["user"], f"{anzahl}x {dienst} abgerufen (nicht gelöscht)")
-    return render_template("start.html", dienste=ALLE_DIENSTE, ausgabe=ausgabe)
+    return render_template("dienst.html", dienste=ALLE_DIENSTE, ausgabe=ausgabe)
 
 @app.route("/dashboard")
 def dashboard():
