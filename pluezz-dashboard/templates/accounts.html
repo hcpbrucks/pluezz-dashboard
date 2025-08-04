@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <title>Accounts abrufen</title>
+</head>
+<body>
+    <h1>Accounts abrufen</h1>
+    <a href="{{ url_for('dienst') }}">Zurück</a> | <a href="{{ url_for('logout') }}">Logout</a>
+    <form method="POST">
+        Dienst auswählen:
+        <select name="dienst" required>
+            <option value="" disabled selected>-- Dienst wählen --</option>
+            {% for dienst in dienste %}
+            <option value="{{ dienst }}">{{ dienst }}</option>
+            {% endfor %}
+        </select><br><br>
+        Anzahl Accounts: <input type="number" name="anzahl" min="1" required><br><br>
+        <button type="submit">Abrufen</button>
+    </form>
+
+    {% if ausgabe %}
+    <h2>Accounts:</h2>
+    <ul>
+        {% for account in ausgabe %}
+        <li>
+            {{ account }}
+            <form method="POST" action="{{ url_for('delete_account', index=loop.index0) }}" style="display:inline">
+                <button type="submit">Löschen</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul style="color:red">
+          {% for msg in messages %}
+            <li>{{ msg }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+</body>
+</html>
