@@ -5,60 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron&display=swap');
+
     body {
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: #fff;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      font-family: 'Orbitron', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #39ff14; /* Neon-Grün */
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
+      text-shadow: 0 0 8px #39ff14;
     }
     .login-container {
-      background: rgba(0, 0, 0, 0.6);
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+      background: rgba(10, 10, 10, 0.85);
+      padding: 40px 35px;
+      border-radius: 15px;
+      box-shadow:
+        0 0 15px #39ff14,
+        0 0 40px #39ff14 inset;
       width: 320px;
       text-align: center;
+      border: 2px solid #39ff14;
     }
     .login-container h1 {
       margin-bottom: 24px;
-      font-weight: 700;
-      letter-spacing: 2px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #39ff14;
+      text-shadow: 0 0 12px #39ff14;
     }
     input[type="text"], input[type="password"] {
       width: 100%;
-      padding: 12px 15px;
+      padding: 14px 18px;
       margin: 10px 0 20px 0;
-      border-radius: 8px;
-      border: none;
+      border-radius: 10px;
+      border: 1.5px solid #39ff14;
       font-size: 16px;
+      background-color: #0d0d0d;
+      color: #39ff14;
+      box-shadow: 0 0 8px #39ff14 inset;
+      transition: border-color 0.3s ease;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      outline: none;
+      border-color: #6aff6a;
+      box-shadow: 0 0 15px #6aff6a inset;
     }
     input[type="submit"] {
-      background-color: #4CAF50;
+      background-color: #39ff14;
       border: none;
-      color: white;
+      color: #0d0d0d;
       padding: 14px 20px;
       text-align: center;
       font-size: 16px;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       width: 100%;
-      transition: background-color 0.3s ease;
-      font-weight: 700;
-      letter-spacing: 1px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      box-shadow: 0 0 10px #39ff14;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      text-transform: uppercase;
     }
     input[type="submit"]:hover {
-      background-color: #45a049;
+      background-color: #6aff6a;
+      box-shadow: 0 0 20px #6aff6a, 0 0 30px #39ff14;
     }
     .error {
-      background-color: #ff4c4c;
-      padding: 10px;
-      border-radius: 8px;
+      background-color: #ff1a1a;
+      padding: 12px;
+      border-radius: 10px;
       margin-bottom: 20px;
-      font-weight: 600;
+      font-weight: 700;
+      box-shadow: 0 0 10px #ff1a1a;
+      color: white;
+      text-shadow: none;
     }
   </style>
 </head>
@@ -68,7 +92,7 @@
     {% if error %}
       <div class="error">{{ error }}</div>
     {% endif %}
-    <form method="post" action="/login">
+    <form method="post" action="/">
       <input type="text" name="username" placeholder="Benutzername" required autofocus />
       <input type="password" name="password" placeholder="Passwort" required />
       <input type="submit" value="Einloggen" />
