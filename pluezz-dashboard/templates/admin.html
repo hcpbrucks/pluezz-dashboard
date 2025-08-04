@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <title>Adminbereich – Pluezz</title>
-    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 <body>
     <div class="container">
@@ -11,13 +11,17 @@
 
         <h2>📦 Lagerstatus</h2>
         <ul>
-            {% for dienst, info in status.items() %}
-                <li>{{ dienst|capitalize }}: {{ info }}</li>
-            {% endfor %}
+            {% if status %}
+                {% for dienst, info in status.items() %}
+                    <li>{{ dienst|capitalize }}: {{ info }}</li>
+                {% endfor %}
+            {% else %}
+                <li>Keine Daten vorhanden.</li>
+            {% endif %}
         </ul>
 
         <h2>➕ Account hinzufügen</h2>
-        <form method="post" action="/admin/add_account">
+        <form method="post" action="{{ url_for('add_account') }}">
             <label for="dienst">Dienst auswählen:</label><br>
             <select name="dienst" id="dienst" required>
                 {% for dienst in dienste %}
@@ -30,7 +34,7 @@
         </form>
 
         <h2>👤 Benutzer hinzufügen</h2>
-        <form method="post" action="/admin/add_user">
+        <form method="post" action="{{ url_for('add_user') }}">
             <input type="text" name="username" placeholder="Benutzername" required><br>
             <input type="password" name="password" placeholder="Passwort" required><br>
             <label><input type="checkbox" name="admin"> Adminrechte</label><br>
@@ -38,8 +42,8 @@
         </form>
 
         <br>
-        <a href="/dashboard"><button>🔙 Zurück zum Dashboard</button></a>
-        <a href="/logout"><button>Logout</button></a>
+        <a href="{{ url_for('dashboard') }}"><button>🔙 Zurück zum Dashboard</button></a>
+        <a href="{{ url_for('logout') }}"><button>Logout</button></a>
     </div>
 </body>
 </html>
