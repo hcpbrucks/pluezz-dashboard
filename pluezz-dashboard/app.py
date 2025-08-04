@@ -1,46 +1,52 @@
 import os
 import json
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, session, flash
+from flask import Flask, render_template, request, redirect, session, flash, url_for
 
 BASE_DIR = os.getcwd()
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static")
+)
 app.secret_key = os.environ.get("SECRET_KEY", "Pluezzzzshop")
 
-# Liste aller Dienste
 ALLE_DIENSTE = [
-    "Netflix", "Spotify", "Disney", "Dazn", "Paramount", "Prime-Video",
-    "YouTube-Premium", "Crunchyroll", "Steam", "GTA Activation Key",
-    "NordVPN", "CapCut-Pro", "Canva", "Adobe Creative Cloud"
+    "Netflix", "Spotify Single Account", "Disney", "Dazn", "Paramount", "Prime-Video",
+    "YouTube-Premium Family", "YouTube-Premium Single Account", "Crunchyroll Fan Account",
+    "Crunchyroll Megafan Account", "Steam 0-3 Random Games", "Steam 4+ Random Games",
+    "Steam Account with Eurotruck Simulator 2", "Steam Account with Wallpaper Engine",
+    "Steam Account with Counter Strike", "Steam Account with Rainbow Six",
+    "Steam Account with Supermarket Simulator", "Steam Account with Red Dead Redemption 2",
+    "Steam Account with FC 25", "Steam Account with Schedule 1", "GTA Activation Key",
+    "Server-Member 500", "Server-Member 1000", "Server-Boost 14x 1 Monat",
+    "Server-Boost 14x 3 Monate", "Nord-Vpn", "CapCut-Pro", "Canva",
+    "Adobe-Creative-Cloud 1 Monat Key", "Adobe-Creative-Cloud Livetime Account"
 ]
 
-# Hilfsfunktion: JSON laden
 def json_laden(dateiname):
     pfad = os.path.join(BASE_DIR, dateiname)
     if not os.path.exists(pfad):
         if dateiname == "accounts.json":
-            # Bei accounts.json initial alle Dienste mit leeren Listen anlegen
-            return {dienst: [] for dienst in ALLE_DIENSTE}
-        if dateiname == "users.json":
-            # Users initial leer anlegen
-            return {"users": []}
-        if dateiname == "logs.json":
+            # Bei accounts.json immer ein dict zurückgeben
+            return {}
+        else:
             return []
-        return {}
     with open(pfad, "r", encoding="utf-8") as f:
         try:
             return json.load(f)
         except json.JSONDecodeError:
-            return {}
+            if dateiname == "accounts.json":
+                return {}
+            else:
+                return []
 
-# Hilfsfunktion: JSON speichern
 def json_speichern(dateiname, daten):
     with open(os.path.join(BASE_DIR, dateiname), "w", encoding="utf-8") as f:
         json.dump(daten, f, indent=4, ensure_ascii=False)
 
-# Log schreiben
-def log_schreiben(user, aktion):
+def log_speichern(user, aktion):
     logs = json_laden("logs.json")
     logs.append({
         "user": user,
@@ -49,183 +55,148 @@ def log_schreiben(user, aktion):
     })
     json_speichern("logs.json", logs)
 
-# Login-Seite
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+        username = request.form["username"]
+        password = request.form["password"]
 
-        users = json_laden("users.json")["users"]
+        env_users = {
+            "Paul": os.environ.get("PAUL_PASSWORD"),
+            "Elias": os.environ.get("ELIAS_PASSWORD")
+        }
 
-        # Wenn users.json leer ist, legen wir 2 Standardaccounts an (Paul und Elias) mit PW aus Umgebungsvariablen
-        if not users:
-            users = [
-                {"name": "Paul", "password": os.environ.get("PAUL_PASSWORD", "Pluezzshop"), "admin": True},
-                {"name": "Elias", "password": os.environ.get("ELIAS_PASSWORD", "geheim"), "admin": False},
-            ]
-            json_speichern("users.json", {"users": users})
+        if username in env_users and password == env_users[username]:
+            session["user"] = username
+            session["admin"] = True
+            log_speichern(username, "Erfolgreich eingeloggt")
+            return redirect("/dienst")
 
-        # Login prüfen
+        users = json_laden("users.json")
         for user in users:
-            if user["name"].lower() == username.lower() and user["password"] == password:
+            if user["name"] == username and user["password"] == password:
                 session["user"] = user["name"]
                 session["admin"] = user.get("admin", False)
-                log_schreiben(user["name"], "eingeloggt")
-                return redirect("/start")
+                log_speichern(username, "Erfolgreich eingeloggt")
+                return redirect("/dienst")
 
-        flash("Login fehlgeschlagen! Falscher Benutzername oder Passwort.")
-
+        flash("Login fehlgeschlagen!")
     return render_template("login.html")
 
-# Startseite mit Übersicht aller Dienste + Lageranzahl + Links
-@app.route("/start")
-def start():
+@app.route("/dienst", methods=["GET"])
+def dienst():
     if "user" not in session:
         return redirect("/")
     accounts = json_laden("accounts.json")
-    # Verfügbarkeit pro Dienst zählen
-    lager = {dienst: len(accounts.get(dienst, [])) for dienst in ALLE_DIENSTE}
-    return render_template("start.html", user=session["user"], admin=session.get("admin", False), lager=lager)
+    bestand = {}
+    for dienst in ALLE_DIENSTE:
+        bestand[dienst] = len(accounts.get(dienst, []))
+    return render_template("dienst.html", dienste=ALLE_DIENSTE, bestand=bestand)
 
-# Seite zum Accounts abrufen und ggf. löschen
 @app.route("/accounts", methods=["GET", "POST"])
-def accounts_page():
+def accounts():
     if "user" not in session:
         return redirect("/")
     accounts = json_laden("accounts.json")
     ausgabe = []
-    max_anzahl = 0
-    dienst_auswahl = None
-
     if request.method == "POST":
         dienst = request.form.get("dienst")
-        dienst_auswahl = dienst
-        try:
-            anzahl = int(request.form.get("anzahl", "0"))
-        except ValueError:
-            flash("Bitte eine gültige Anzahl eingeben!")
-            return redirect("/accounts")
-
-        if dienst not in ALLE_DIENSTE:
+        anzahl = request.form.get("anzahl")
+        if not dienst or dienst not in ALLE_DIENSTE:
             flash("Ungültiger Dienst ausgewählt!")
-            return redirect("/accounts")
-
-        verfuegbar = len(accounts.get(dienst, []))
-        max_anzahl = verfuegbar
-
+            return redirect(url_for("accounts"))
+        try:
+            anzahl = int(anzahl)
+        except:
+            flash("Bitte eine gültige Zahl eingeben!")
+            return redirect(url_for("accounts"))
         if anzahl <= 0:
-            flash("Bitte eine Anzahl größer 0 eingeben!")
-            return redirect("/accounts")
-        if anzahl > verfuegbar:
-            flash(f"Es sind nur {verfuegbar} Accounts von {dienst} verfügbar.")
-            return redirect("/accounts")
-
+            flash("Anzahl muss größer als 0 sein!")
+            return redirect(url_for("accounts"))
+        vorhanden = len(accounts.get(dienst, []))
+        if anzahl > vorhanden:
+            flash(f"Nicht genug Accounts vorhanden! ({vorhanden} verfügbar)")
+            return redirect(url_for("accounts"))
         ausgabe = accounts[dienst][:anzahl]
-        # Speichere die Auswahl in Session, damit wir die Accounts zum Löschen zeigen können
-        session["letzte_ausgabe"] = {"dienst": dienst, "accounts": ausgabe}
+        session["last_ausgabe_dienst"] = dienst
+        session["last_ausgabe_count"] = anzahl
+        log_speichern(session["user"], f"{anzahl}x {dienst} abgerufen (nicht gelöscht)")
+    return render_template("accounts.html", dienste=ALLE_DIENSTE, ausgabe=ausgabe)
 
-    # Falls wir schon vorher ausgegeben haben (z.B. nach Reload), aus Session holen
-    if "letzte_ausgabe" in session and not ausgabe:
-        letzte = session["letzte_ausgabe"]
-        dienst_auswahl = letzte["dienst"]
-        ausgabe = letzte["accounts"]
-        max_anzahl = len(accounts.get(dienst_auswahl, []))
-
-    return render_template("accounts.html", dienste=ALLE_DIENSTE, ausgabe=ausgabe, dienst_auswahl=dienst_auswahl, max_anzahl=max_anzahl)
-
-# Route zum Löschen eines einzelnen Accounts aus der letzten Ausgabe
 @app.route("/accounts/delete/<int:index>", methods=["POST"])
 def delete_account(index):
     if "user" not in session:
         return redirect("/")
-    if "letzte_ausgabe" not in session:
-        flash("Keine Accounts zum Löschen ausgewählt.")
-        return redirect("/accounts")
-
-    letzte = session["letzte_ausgabe"]
-    dienst = letzte["dienst"]
+    dienst = session.get("last_ausgabe_dienst")
+    if not dienst:
+        flash("Kein Dienst ausgewählt")
+        return redirect(url_for("accounts"))
     accounts = json_laden("accounts.json")
-
-    # Prüfen ob Index gültig
-    if index < 0 or index >= len(letzte["accounts"]):
-        flash("Ungültiger Index zum Löschen.")
-        return redirect("/accounts")
-
-    # Account aus gesamtem Lager entfernen
-    account_to_delete = letzte["accounts"][index]
-    if dienst in accounts and account_to_delete in accounts[dienst]:
-        accounts[dienst].remove(account_to_delete)
+    if dienst in accounts and 0 <= index < len(accounts[dienst]):
+        account_weg = accounts[dienst].pop(index)
         json_speichern("accounts.json", accounts)
-        log_schreiben(session["user"], f"Account gelöscht: {account_to_delete} aus {dienst}")
-
-        # Aus Session-Ausgabe entfernen
-        letzte["accounts"].pop(index)
-        session["letzte_ausgabe"] = letzte
-        flash("Account gelöscht.")
+        log_speichern(session["user"], f"Account gelöscht bei Dienst {dienst}: {account_weg}")
+        flash("Account erfolgreich gelöscht")
     else:
-        flash("Account nicht gefunden.")
+        flash("Ungültiger Account Index")
+    return redirect(url_for("accounts"))
 
-    return redirect("/accounts")
-
-# Adminbereich: Lagerübersicht, Accounts hinzufügen, User hinzufügen
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
     if "user" not in session or not session.get("admin", False):
         return redirect("/")
-
     accounts = json_laden("accounts.json")
     users = json_laden("users.json")
-    message = ""
+    bestand = {dienst: len(accounts.get(dienst, [])) for dienst in ALLE_DIENSTE}
 
     if request.method == "POST":
-        # Unterscheidung: accounts hinzufügen oder user hinzufügen
+        # Account hinzufügen
         if "add_account" in request.form:
             dienst = request.form.get("dienst")
             account = request.form.get("account")
-
-            if not dienst or not account or dienst not in ALLE_DIENSTE:
-                flash("Bitte Dienst und Account richtig angeben.")
+            if not dienst or dienst not in ALLE_DIENSTE:
+                flash("Ungültiger Dienst")
+            elif not account or account.strip() == "":
+                flash("Account darf nicht leer sein")
             else:
                 if dienst not in accounts:
                     accounts[dienst] = []
                 accounts[dienst].append(account.strip())
                 json_speichern("accounts.json", accounts)
-                log_schreiben(session["user"], f"Account hinzugefügt: {account} zu {dienst}")
-                flash(f"Account zu {dienst} hinzugefügt.")
+                log_speichern(session["user"], f"Account hinzugefügt zu Dienst {dienst}: {account.strip()}")
+                flash("Account erfolgreich hinzugefügt")
 
-        elif "add_user" in request.form:
+        # User hinzufügen
+        if "add_user" in request.form:
             username = request.form.get("username")
             password = request.form.get("password")
             admin_check = request.form.get("admin_check") == "on"
-
             if not username or not password:
-                flash("Bitte Benutzername und Passwort angeben.")
+                flash("Benutzername und Passwort dürfen nicht leer sein")
             else:
-                # Benutzer hinzufügen (falls noch nicht vorhanden)
-                existing_usernames = [u["name"].lower() for u in users.get("users", [])]
-                if username.lower() in existing_usernames:
-                    flash("Benutzername existiert bereits!")
+                if any(u["name"] == username for u in users):
+                    flash("Benutzer existiert bereits")
                 else:
-                    users.setdefault("users", []).append({
-                        "name": username,
-                        "password": password,
-                        "admin": admin_check
-                    })
+                    users.append({"name": username, "password": password, "admin": admin_check})
                     json_speichern("users.json", users)
-                    log_schreiben(session["user"], f"Benutzer hinzugefügt: {username} (Admin: {admin_check})")
-                    flash(f"Benutzer {username} hinzugefügt.")
+                    log_speichern(session["user"], f"Benutzer erstellt: {username}, Admin: {admin_check}")
+                    flash("Benutzer erfolgreich erstellt")
 
-    # Lagerübersicht für Admin
-    lager = {dienst: len(accounts.get(dienst, [])) for dienst in ALLE_DIENSTE}
-    return render_template("admin.html", user=session["user"], lager=lager, dienste=ALLE_DIENSTE)
+    return render_template("admin.html", dienste=ALLE_DIENSTE, bestand=bestand, users=users)
 
-# Logout
+@app.route("/admin/logs")
+def logs():
+    if "user" not in session or not session.get("admin", False):
+        return redirect("/")
+    logs = json_laden("logs.json")
+    logs = sorted(logs, key=lambda x: datetime.strptime(x["zeit"], "%d.%m.%Y %H:%M"), reverse=True)
+    return render_template("logs.html", logs=logs)
+
 @app.route("/logout")
 def logout():
     user = session.get("user", "Unbekannt")
     session.clear()
-    log_schreiben(user, "ausgeloggt")
+    log_speichern(user, "Ausgeloggt")
     return redirect("/")
 
 if __name__ == "__main__":
