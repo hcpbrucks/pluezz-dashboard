@@ -11,7 +11,7 @@ app = Flask(
 )
 app.secret_key = 'Pluezzzzshop'
 
-# Helper-Funktionen für Daten
+# Helper-Funktionen für die Daten
 def load_json(path):
     full_path = os.path.join(BASE_DIR, path)
     if not os.path.exists(full_path):
