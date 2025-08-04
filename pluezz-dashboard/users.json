@@ -1,12 +1,12 @@
 [
   {
-    "benutzername": "Paul",
-    "passwort": "pluezzshop",
-    "rolle": "admin"
+    "name": "Paul",
+    "password": "pluezzshop",
+    "admin": true
   },
   {
-    "benutzername": "Elias",
-    "passwort": "pluezzshop",
-    "rolle": "admin"
+    "name": "Elias",
+    "password": "pluezzshop",
+    "admin": true
   }
 ]
