@@ -55,7 +55,7 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        # Login über Umgebungsvariablen (Paul + Elias)
+        # Login Ã¼ber Umgebungsvariablen (Paul + Elias)
         env_users = {
             "Paul": os.environ.get("PAUL_PASSWORD"),
             "Elias": os.environ.get("ELIAS_PASSWORD")
@@ -66,7 +66,7 @@ def login():
             session["admin"] = True  # Beide sind Admin
             return redirect("/start")
 
-        # Login über users.json (für manuell erstellte User)
+        # Login Ã¼ber users.json (fÃ¼r manuell erstellte User)
         users = json_laden("users.json")
         for user in users:
             if user["name"] == username and user["password"] == password:
@@ -92,9 +92,9 @@ def start():
             if loeschen:
                 accounts[dienst] = accounts[dienst][anzahl:]
                 json_speichern("accounts.json", accounts)
-                log_speichern(session["user"], f"{anzahl}x {dienst} abgerufen & gelöscht")
+                log_speichern(session["user"], f"{anzahl}x {dienst} abgerufen & gelÃ¶scht")
             else:
-                log_speichern(session["user"], f"{anzahl}x {dienst} abgerufen (nicht gelöscht)")
+                log_speichern(session["user"], f"{anzahl}x {dienst} abgerufen (nicht gelÃ¶scht)")
     return render_template("dienst.html", dienste=ALLE_DIENSTE, ausgabe=ausgabe)
 
 @app.route("/dashboard")
@@ -116,13 +116,13 @@ def admin():
     for dienst in ALLE_DIENSTE:
         menge = len(accounts.get(dienst, []))
         if menge == 0:
-            st = "❌ Leer"
+            st = "â Leer"
         elif menge < 5:
-            st = "🔴 Nachschub nötig"
+            st = "ð´ Nachschub nÃ¶tig"
         elif menge <= 10:
-            st = "🟠 Knapp"
+            st = "ð  Knapp"
         else:
-            st = "🟢 Auf Lager"
+            st = "ð¢ Auf Lager"
         status[dienst] = f"{menge} ({st})"
     return render_template("admin.html", status=status)
 
@@ -143,7 +143,7 @@ def add_account():
     accounts = json_laden("accounts.json")
     accounts.setdefault(dienst, []).extend(neu)
     json_speichern("accounts.json", accounts)
-    log_speichern(session["user"], f"{len(neu)}x {dienst} hinzugefügt")
+    log_speichern(session["user"], f"{len(neu)}x {dienst} hinzugefÃ¼gt")
     return redirect("/admin")
 
 @app.route("/admin/add_user", methods=["POST"])
@@ -157,7 +157,7 @@ def add_user():
         "admin": request.form.get("admin") == "on"
     })
     json_speichern("users.json", users)
-    log_speichern(session["user"], f"Neuer User {request.form['username']} hinzugefügt")
+    log_speichern(session["user"], f"Neuer User {request.form['username']} hinzugefÃ¼gt")
     return redirect("/admin")
 
 @app.route("/logout")
