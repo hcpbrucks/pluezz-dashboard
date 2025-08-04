@@ -11,6 +11,12 @@ app = Flask(
 )
 app.secret_key = 'Pluezzzzshop'
 
+# Spezifische Admin-Nutzer, deren Passwörter nur über Umgebungsvariablen gesetzt werden
+SPECIAL_ADMINS = {
+    "Paul": os.environ.get("PAUL_PASSWORD"),
+    "Elias": os.environ.get("ELIAS_PASSWORD")
+}
+
 ALLE_DIENSTE = [
     "Netflix",
     "Spotify Single Account",
@@ -79,13 +85,27 @@ def login():
     if request.method == "POST":
         name = request.form["username"]
         pw = request.form["password"]
+
+        # Zuerst prüfen, ob special admin
+        if name in SPECIAL_ADMINS:
+            if pw == SPECIAL_ADMINS[name]:
+                session["user"] = name
+                session["admin"] = True
+                return redirect(url_for("dashboard"))
+            else:
+                flash("Login fehlgeschlagen")
+                return render_template("login.html")
+
+        # Sonstige User aus JSON laden (ohne Paul und Elias)
         users = load_users()
         for user in users:
             if user["name"] == name and user["password"] == pw:
                 session["user"] = name
                 session["admin"] = user.get("admin", False)
                 return redirect(url_for("dashboard"))
+
         flash("Login fehlgeschlagen")
+
     return render_template("login.html")
 
 @app.route("/dashboard")
@@ -117,31 +137,22 @@ def dienst_view(dienst):
             flash("Ungültige Anzahl")
             return redirect(url_for("dienst_view", dienst=dienst))
 
-        if 0 < anzahl <= len(accounts[dienst]):
+        if anzahl <= len(accounts[dienst]) and anzahl > 0:
             ausgabe = accounts[dienst][:anzahl]
+
+            if request.form.get("loeschen") == "on":
+                accounts[dienst] = accounts[dienst][anzahl:]
+                save_accounts(accounts)
+                flash(f"{anzahl} Account(s) wurden gelöscht.")
+            else:
+                flash(f"{anzahl} Account(s) wurden ausgegeben.")
+
             return render_template("dienst.html", dienst=dienst, ausgabe=ausgabe, max=len(accounts[dienst]))
         else:
             flash("Nicht genug Accounts auf Lager oder ungültige Anzahl")
             return redirect(url_for("dienst_view", dienst=dienst))
 
     return render_template("dienst.html", dienst=dienst, ausgabe=None, max=len(accounts.get(dienst, [])))
-
-@app.route("/dienst/<dienst>/delete_account", methods=["POST"])
-def delete_account(dienst):
-    if "user" not in session:
-        return redirect(url_for("login"))
-    account_to_delete = request.form.get("account")
-    if not account_to_delete:
-        flash("Kein Account angegeben zum Löschen.")
-        return redirect(url_for("dienst_view", dienst=dienst))
-    accounts = load_accounts()
-    if dienst in accounts and account_to_delete in accounts[dienst]:
-        accounts[dienst].remove(account_to_delete)
-        save_accounts(accounts)
-        flash(f"Account '{account_to_delete}' wurde gelöscht.")
-    else:
-        flash("Account nicht gefunden.")
-    return redirect(url_for("dienst_view", dienst=dienst))
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
@@ -182,6 +193,12 @@ def add_user():
     name = request.form["username"]
     pw = request.form["password"]
     admin_flag = request.form.get("admin") == "on"
+
+    # Paul und Elias können hier nicht mehr hinzugefügt werden, da Passwort via ENV
+    if name in SPECIAL_ADMINS:
+        flash("Dieser Nutzer wird speziell verwaltet und kann nicht hinzugefügt werden.")
+        return redirect(url_for("admin"))
+
     users = load_users()
     users.append({"name": name, "password": pw, "admin": admin_flag})
     save_users(users)
