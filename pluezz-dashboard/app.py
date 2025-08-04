@@ -1,6 +1,8 @@
 import os
-print("Templates folder exists:", os.path.isdir(os.path.join(os.getcwd(), "templates")))
-print("Login.html exists:", os.path.isfile(os.path.join(os.getcwd(), "templates", "login.html")))
+
+# Debug-Ausgabe zum Überprüfen, ob Templates-Ordner und login.html vorhanden sind
+print("Templates folder exists:", os.path.isdir("templates"))
+print("login.html exists:", os.path.isfile(os.path.join("templates", "login.html")))
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import json
