@@ -1,10 +1,12 @@
-{
-    "Paul": {
-        "password": "pluezzshop",
-        "admin": true
-    },
-    "Elias": {
-        "password": "pluezzshop",
-        "admin": true
-    }
-}
+[
+  {
+    "benutzername": "Paul",
+    "passwort": "pluezzshop",
+    "rolle": "admin"
+  },
+  {
+    "benutzername": "Elias",
+    "passwort": "pluezzshop",
+    "rolle": "admin"
+  }
+]
