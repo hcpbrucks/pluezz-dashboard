@@ -1,0 +1,10 @@
+{
+    "Paul": {
+        "password": "pluezzshop",
+        "admin": true
+    },
+    "Elias": {
+        "password": "pluezzshop",
+        "admin": true
+    }
+}
