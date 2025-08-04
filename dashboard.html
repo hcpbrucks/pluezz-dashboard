@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard – Pluezz</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📦 Pluezz Dashboard</h1>
+        <p>Eingeloggt als: {{ session["user"] }}</p>
+        {% if is_admin %}
+            <a href="/admin">⚙️ Adminbereich</a>
+        {% endif %}
+        <ul>
+            {% for dienst, anzahl in stock.items() %}
+                <li>
+                    <a href="/dienst/{{ dienst }}">{{ dienst|capitalize }}</a>: {{ anzahl }} Stück
+                </li>
+            {% endfor %}
+        </ul>
+        <a href="/logout">🚪 Abmelden</a>
+    </div>
+</body>
+</html>
