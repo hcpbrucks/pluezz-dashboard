@@ -1,25 +1,44 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8" />
-    <title>Logs – Pluezz</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Logs</title>
+  <style>
+    body {
+      background: #1b1b1b;
+      color: #f0f0f0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 30px;
+    }
+    h1 {
+      color: #ff9800;
+      text-align: center;
+      margin-bottom: 30px;
+      letter-spacing: 2px;
+    }
+    .log-entry {
+      background-color: #272727;
+      border-left: 6px solid #ff9800;
+      margin-bottom: 15px;
+      padding: 15px 20px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+      font-size: 14px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📜 Logs</h1>
-
-        {% if logs %}
-            <ul>
-                {% for log in logs %}
-                    <li>{{ log }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>Keine Logs vorhanden.</p>
-        {% endif %}
-
-        <a href="{{ url_for('dashboard') }}"><button>🔙 Zurück zum Dashboard</button></a>
-    </div>
+  <h1>Logs</h1>
+  {% if logs %}
+    {% for entry in logs %}
+      <div class="log-entry">{{ entry }}</div>
+    {% endfor %}
+  {% else %}
+    <p style="text-align:center; color:#777;">Keine Logs vorhanden.</p>
+  {% endif %}
 </body>
-</html> 
+</html>
