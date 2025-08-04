@@ -11,7 +11,6 @@ app = Flask(
 )
 app.secret_key = 'Pluezzzzshop'
 
-# Liste aller Dienste, die im Dashboard angezeigt werden sollen
 ALLE_DIENSTE = [
     "Netflix",
     "Spotify Single Account",
@@ -45,7 +44,6 @@ ALLE_DIENSTE = [
     "Adobe-Creative-Cloud Livetime Account"
 ]
 
-# Helper-Funktionen für die Daten
 def load_json(path):
     full_path = os.path.join(BASE_DIR, path)
     if not os.path.exists(full_path):
@@ -76,7 +74,6 @@ def save_accounts(data):
 def load_prices():
     return load_json("prices.json")
 
-# LOGIN
 @app.route("/", methods=["GET", "POST", "HEAD"])
 def login():
     if request.method == "POST":
@@ -91,7 +88,6 @@ def login():
         flash("Login fehlgeschlagen")
     return render_template("login.html")
 
-# DASHBOARD
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
@@ -105,7 +101,6 @@ def dashboard():
             stock[dienst] = 0
     return render_template("dashboard.html", stock=stock, is_admin=session.get("admin", False))
 
-# ACCOUNT-ABRUF
 @app.route("/dienst/<dienst>", methods=["GET", "POST"])
 def dienst_view(dienst):
     if "user" not in session:
@@ -114,23 +109,31 @@ def dienst_view(dienst):
     if dienst not in accounts:
         flash("Dienst nicht gefunden")
         return redirect(url_for("dashboard"))
+    
     if request.method == "POST":
         try:
             anzahl = int(request.form["anzahl"])
-        except ValueError:
+        except (ValueError, KeyError):
             flash("Ungültige Anzahl")
             return redirect(url_for("dienst_view", dienst=dienst))
-        if anzahl <= len(accounts[dienst]):
+
+        if anzahl <= len(accounts[dienst]) and anzahl > 0:
             ausgabe = accounts[dienst][:anzahl]
-            if request.form.get("loeschen"):
+
+            if request.form.get("loeschen") == "on":
                 accounts[dienst] = accounts[dienst][anzahl:]
                 save_accounts(accounts)
+                flash(f"{anzahl} Account(s) wurden gelöscht.")
+            else:
+                flash(f"{anzahl} Account(s) wurden ausgegeben.")
+
             return render_template("dienst.html", dienst=dienst, ausgabe=ausgabe, max=len(accounts[dienst]))
         else:
-            flash("Nicht genug Accounts auf Lager")
-    return render_template("dienst.html", dienst=dienst, ausgabe=None, max=len(accounts[dienst]))
+            flash("Nicht genug Accounts auf Lager oder ungültige Anzahl")
+            return redirect(url_for("dienst_view", dienst=dienst))
 
-# ADMIN DASHBOARD
+    return render_template("dienst.html", dienst=dienst, ausgabe=None, max=len(accounts.get(dienst, [])))
+
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
     if "user" not in session or not session.get("admin", False):
@@ -150,7 +153,6 @@ def admin():
         status[dienst] = f"{menge} ({s})"
     return render_template("admin.html", status=status)
 
-# ACCOUNTS HINZUFÜGEN
 @app.route("/admin/add_account", methods=["POST"])
 def add_account():
     if "user" not in session or not session.get("admin", False):
@@ -164,7 +166,6 @@ def add_account():
     flash("Account(s) hinzugefügt")
     return redirect(url_for("admin"))
 
-# BENUTZER HINZUFÜGEN
 @app.route("/admin/add_user", methods=["POST"])
 def add_user():
     if "user" not in session or not session.get("admin", False):
@@ -178,13 +179,11 @@ def add_user():
     flash("Nutzer hinzugefügt")
     return redirect(url_for("admin"))
 
-# LOGOUT
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("login"))
 
-# START
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
