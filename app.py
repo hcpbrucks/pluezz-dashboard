@@ -3,7 +3,7 @@ import json
 import os
 
 app = Flask(__name__)
-app.secret_key = 'supersecret'
+app.secret_key = 'Pluezzzshop'
 
 # Nutzer laden
 def load_users():
