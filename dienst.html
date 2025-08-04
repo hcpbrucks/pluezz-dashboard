@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ dienst }} – Pluezz</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>{{ dienst|capitalize }}</h1>
+        <form method="post">
+            <label>Wie viele willst du abrufen? (Max: {{ max }})</label><br>
+            <input type="number" name="anzahl" min="1" max="{{ max }}" required><br>
+            <label><input type="checkbox" name="loeschen"> Danach löschen?</label><br>
+            <button type="submit">Abrufen</button>
+        </form>
+        {% if ausgabe %}
+            <h3>Deine Accounts:</h3>
+            <ul>
+                {% for acc in ausgabe %}
+                    <li>{{ acc }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <a href="/dashboard">🔙 Zurück</a>
+    </div>
+</body>
+</html>
