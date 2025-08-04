@@ -1,8 +1,9 @@
 import os
 print("Templates folder exists:", os.path.isdir(os.path.join(os.getcwd(), "templates")))
-print("Login.html exists:", os.path.isfile(os.path.join(os.getcwd(), "templates", "login.html")))from flask import Flask, render_template, request, redirect, url_for, session, flash
+print("Login.html exists:", os.path.isfile(os.path.join(os.getcwd(), "templates", "login.html")))
+
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import json
-import os
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = 'Pluezzzzshop'
