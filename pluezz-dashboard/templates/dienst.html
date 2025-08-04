@@ -2,45 +2,26 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8" />
-    <title>{{ dienst }} – Pluezz</title>
-    <link rel="stylesheet" href="/static/style.css" />
+    <title>Dienste Übersicht</title>
 </head>
 <body>
-    <div class="container">
-        <h1>{{ dienst|capitalize }}</h1>
+    <h1>Willkommen, {{ user }}!</h1>
 
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-            <div class="flash-messages">
-              {% for message in messages %}
-                <p>{{ message }}</p>
-              {% endfor %}
-            </div>
-          {% endif %}
-        {% endwith %}
+    <h2>Verfügbare Dienste und Accounts</h2>
+    <table border="1" cellpadding="5" cellspacing="0">
+        <tr><th>Dienst</th><th>Verfügbar</th></tr>
+        {% for dienst, anzahl in lager.items() %}
+        <tr><td>{{ dienst }}</td><td>{{ anzahl }}</td></tr>
+        {% endfor %}
+    </table>
 
-        <form method="post">
-            <label for="anzahl">Wie viele willst du abrufen? (Max: {{ max }})</label><br />
-            <input type="number" id="anzahl" name="anzahl" min="1" max="{{ max }}" required /><br />
-            <button type="submit">Abrufen</button>
-        </form>
+    <br>
+    <a href="/accounts"><button>Accounts abrufen</button></a><br><br>
 
-        {% if ausgabe %}
-            <h3>Deine Accounts:</h3>
-            <ul>
-                {% for acc in ausgabe %}
-                    <li>
-                        {{ acc }}
-                        <form action="{{ url_for('delete_account', dienst=dienst) }}" method="POST" style="display:inline;">
-                            <input type="hidden" name="account" value="{{ acc }}">
-                            <button type="submit">Löschen</button>
-                        </form>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% endif %}
+    {% if admin %}
+    <a href="/admin"><button>Admin Panel</button></a><br><br>
+    {% endif %}
 
-        <a href="/dashboard">🔙 Zurück</a>
-    </div>
+    <a href="/logout"><button>Logout</button></a>
 </body>
 </html>
