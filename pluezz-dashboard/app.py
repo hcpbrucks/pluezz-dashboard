@@ -33,7 +33,8 @@ def save_users(data):
     save_json("users.json", data)
 
 def load_accounts():
-    return load_json("accounts.json")
+    data = load_json("accounts.json")
+    return data if isinstance(data, dict) else {}
 
 def save_accounts(data):
     save_json("accounts.json", data)
