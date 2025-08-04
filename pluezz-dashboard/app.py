@@ -6,12 +6,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dein-geheimer-schluessel")
 
-@app.route("/")
-def home():
-    if session.get("user"):
-        return redirect(url_for("dashboard"))
-    return redirect(url_for("login"))
-
 # Nutzer laden (Passwörter aus Umgebungsvariablen)
 users = {
     "paul": {
@@ -52,10 +46,16 @@ def load_users_file():
     except FileNotFoundError:
         return {}
 
-# Speichere users.json (zusätzlich zu in-memory users)
+# Speichere users.json
 def save_users_file(users_file):
     with open("users.json", "w") as f:
         json.dump(users_file, f, indent=4)
+
+@app.route("/")
+def home():
+    if session.get("user"):
+        return redirect(url_for("dashboard"))
+    return redirect(url_for("login"))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -63,10 +63,7 @@ def login():
         username = request.form.get("username").lower()
         password = request.form.get("password")
         
-        # Zuerst check im hardcodierten users dict (env)
         user = users.get(username)
-        
-        # Wenn nicht gefunden, check in users.json (für neue user)
         if not user:
             users_file = load_users_file()
             if username in users_file:
@@ -84,7 +81,11 @@ def login():
 def dashboard():
     if not session.get("user"):
         return redirect(url_for("login"))
-    return render_template("dashboard.html", user=session["user"], admin=session["admin"])
+
+    accounts = load_accounts()
+    status = {dienst: len(accounts.get(dienst, [])) for dienst in dienste}
+
+    return render_template("dashboard.html", user=session["user"], admin=session["admin"], status=status)
 
 @app.route("/logout")
 def logout():
@@ -99,8 +100,6 @@ def admin():
     
     accounts = load_accounts()
     users_file = load_users_file()
-
-    # Lagerstatus: zähle Accounts pro Dienst
     status = {dienst: len(accounts.get(dienst, [])) for dienst in dienste}
 
     if request.method == "POST":
