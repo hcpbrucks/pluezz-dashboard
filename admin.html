@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Adminbereich – Pluezz</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Adminbereich</h1>
+
+        <h2>📦 Lagerstatus</h2>
+        <ul>
+            {% for dienst, info in status.items() %}
+                <li>{{ dienst|capitalize }}: {{ info }}</li>
+            {% endfor %}
+        </ul>
+
+        <h2>➕ Account hinzufügen</h2>
+        <form method="post" action="/admin/add_account">
+            <input type="text" name="dienst" placeholder="Dienstname" required><br>
+            <textarea name="daten" placeholder="E-Mail:Passwort oder Key" required></textarea><br>
+            <button type="submit">Hinzufügen</button>
+        </form>
+
+        <h2>👤 Benutzer hinzufügen</h2>
+        <form method="post" action="/admin/add_user">
+            <input type="text" name="username" placeholder="Benutzername" required><br>
+            <input type="password" name="password" placeholder="Passwort" required><br>
+            <label><input type="checkbox" name="admin"> Adminrechte</label><br>
+            <button type="submit">Benutzer erstellen</button>
+        </form>
+
+        <a href="/dashboard">🔙 Zurück zum Dashboard</a>
+    </div>
+</body>
+</html>
