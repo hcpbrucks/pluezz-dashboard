@@ -1,4 +1,4 @@
-import os
+@import os
 import json
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -6,6 +6,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dein-geheimer-schluessel")
 
+@app.route("/")
+def home():
+    if session.get("user"):
+        return redirect(url_for("dashboard"))
+    return redirect(url_for("login"))
 # Nutzer laden (Passwörter aus Umgebungsvariablen)
 users = {
     "paul": {
