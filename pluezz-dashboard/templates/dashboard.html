@@ -1,25 +1,32 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Dashboard – Pluezz</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 <body>
     <div class="container">
-        <h1>📦 Pluezz Dashboard</h1>
-        <p>Eingeloggt als: {{ session["user"] }}</p>
-        {% if is_admin %}
-            <a href="/admin">⚙️ Adminbereich</a>
-        {% endif %}
+        <h1>📊 Dashboard</h1>
+        <p>Hallo, {{ session.get('user') }}!</p>
+
+        <h2>Verfügbare Dienste & Bestand</h2>
         <ul>
-            {% for dienst, anzahl in stock.items() %}
-                <li>
-                    <a href="/dienst/{{ dienst }}">{{ dienst|capitalize }}</a>: {{ anzahl }} Stück
-                </li>
-            {% endfor %}
+            {% if status %}
+                {% for dienst, anzahl in status.items() %}
+                    <li>{{ dienst|capitalize }}: {{ anzahl }} Accounts</li>
+                {% endfor %}
+            {% else %}
+                <li>Keine Daten vorhanden.</li>
+            {% endif %}
         </ul>
-        <a href="/logout">🚪 Abmelden</a>
+
+        <a href="{{ url_for('accounts') }}"><button>🔍 Accounts verwalten</button></a>
+        {% if session.get('admin') %}
+            <a href="{{ url_for('admin') }}"><button>⚙️ Adminbereich</button></a>
+            <a href="{{ url_for('logs') }}"><button>📜 Logs anzeigen</button></a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}"><button>Logout</button></a>
     </div>
 </body>
 </html>
