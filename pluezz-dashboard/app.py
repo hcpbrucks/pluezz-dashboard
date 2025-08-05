@@ -102,12 +102,28 @@ def dashboard():
     return render_template("dashboard.html", status=status, dienste=dienste)
 
 # DIENSTSEITE MIT EINZELNEM LÖSCHEN
-@app.route("/dienst/<dienst>", methods=["GET", "POST"])
-def dienst(dienst):
+@app.route("/dienst/<dienst>/delete", methods=["POST"])
+def delete_account(dienst):
     if "user" not in session:
         return redirect(url_for("login"))
     if dienst not in dienste:
         abort(404)
+
+    account_index = request.form.get("index")
+    accounts = load_accounts()
+    dienst_accounts = accounts.get(dienst, [])
+
+    try:
+        index = int(account_index)
+        if 0 <= index < len(dienst_accounts):
+            gelöscht = dienst_accounts.pop(index)
+            accounts[dienst] = dienst_accounts
+            save_accounts(accounts)
+            flash(f"Account gelöscht: {gelöscht}")
+    except:
+        flash("Fehler beim Löschen.")
+
+    return redirect(url_for("dienst", dienst=dienst))
 
     accounts = load_accounts()
     dienst_accounts = accounts.get(dienst, [])
