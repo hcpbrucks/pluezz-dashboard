@@ -5,48 +5,89 @@
     <title>Dashboard</title>
     <style>
         body {
-            background-color: #121212;
-            color: #eee;
+            background-color: #1e1e2f;
+            color: #ddd;
             font-family: Arial, sans-serif;
+            margin: 0;
             padding: 20px;
         }
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 30px;
         }
-        a.logout {
-            color: #ff5555;
+        a {
+            color: #4e5cff;
             text-decoration: none;
             font-weight: bold;
         }
-        ul {
-            list-style: none;
-            padding: 0;
+        a:hover {
+            color: #3b47d9;
         }
-        li {
-            background-color: #222;
-            margin: 8px 0;
-            padding: 10px;
-            border-radius: 5px;
+        h1 {
+            margin: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #2a2a40;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #3b3b5c;
+        }
+        tr:nth-child(even) {
+            background-color: #252538;
+        }
+        .status-icon {
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Willkommen, {{ user }}!</h1>
-        <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+        <h1>Dashboard</h1>
+        <nav>
+            <a href="{{ url_for('admin') }}">Admin-Bereich</a> |
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
     </header>
 
-    <h2>Deine Dienste und verfügbare Accounts:</h2>
-    <ul>
-        {% for dienst, anzahl in status.items() %}
-            <li>{{ dienst }}: {{ anzahl }} Accounts verfügbar</li>
-        {% endfor %}
-    </ul>
-
-    {% if admin %}
-        <a href="{{ url_for('admin') }}">Admin-Bereich</a>
-    {% endif %}
+    <table>
+        <thead>
+            <tr>
+                <th>Dienst</th>
+                <th>Verfügbare Accounts</th>
+                <th>Status</th>
+                <th>Aktion</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dienst in dienste %}
+                <tr>
+                    <td>{{ dienst }}</td>
+                    <td>{{ status[dienst] }}</td>
+                    <td class="status-icon">
+                        {% if status[dienst] > 10 %}
+                            🟢
+                        {% elif status[dienst] >= 5 %}
+                            🟠
+                        {% elif status[dienst] > 0 %}
+                            🔴
+                        {% else %}
+                            ❌
+                        {% endif %}
+                    </td>
+                    <td><a href="{{ url_for('dienst', dienst=dienst) }}" style="color:#4e5cff;">Anzeigen</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>
