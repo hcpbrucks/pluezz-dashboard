@@ -65,7 +65,7 @@ def login():
         return ""
 
     if "user" in session:
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("dashboard"))  # Direkt zum Dashboard, wenn schon eingeloggt
 
     error = None
     if request.method == "POST":
@@ -137,7 +137,7 @@ def dienst(dienst):
 
     return render_template("dienst.html", dienst=dienst, accounts=ausgewählte_accounts)
 
-# NEUE ROUTE FÜR ACCOUNT-LÖSCHEN ÜBER accounts.html
+# Route für Account-Löschen aus dashboard oder dienst-Seite
 @app.route("/delete_account", methods=["POST"])
 def delete_account():
     if "user" not in session:
@@ -195,22 +195,20 @@ def admin():
 
         if action == "add_account":
             dienst_name = request.form.get("dienst")
-            account_data = request.form.get("account")
-            if dienst_name in dienste and account_data:
-                # Wir erwarten account_data als JSON-string, den wir parsen und speichern
-                try:
-                    import json as js
-                    acc_obj = js.loads(account_data)
-                    if all(k in acc_obj for k in ("service", "email", "password")):
-                        accounts.setdefault(dienst_name, []).append(acc_obj)
-                        save_accounts(accounts)
-                        flash(f"Account zu {dienst_name} hinzugefügt.")
-                    else:
-                        flash("Account muss service, email und password enthalten.", "error")
-                except js.JSONDecodeError:
-                    flash("Ungültiges JSON für Account.", "error")
+            email = request.form.get("email")
+            password = request.form.get("password")
+
+            if dienst_name in dienste and email and password:
+                acc_obj = {
+                    "service": dienst_name,
+                    "email": email,
+                    "password": password
+                }
+                accounts.setdefault(dienst_name, []).append(acc_obj)
+                save_accounts(accounts)
+                flash(f"Account zu {dienst_name} hinzugefügt.")
             else:
-                flash("Ungültige Eingabe beim Hinzufügen eines Accounts.", "error")
+                flash("Bitte Dienst, E-Mail und Passwort korrekt angeben.", "error")
 
         elif action == "add_user":
             username = request.form.get("username")
