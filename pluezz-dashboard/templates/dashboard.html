@@ -2,22 +2,51 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8" />
-    <title>Dashboard – Pluezz</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <title>Dashboard</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #eee;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        a.logout {
+            color: #ff5555;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background-color: #222;
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Dashboard</h1>
+    <header>
+        <h1>Willkommen, {{ user }}!</h1>
+        <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+    </header>
 
-        <h2>Lagerstatus</h2>
-        <ul>
-            {% for dienst, anzahl in status.items() %}
-                <li>{{ dienst|capitalize }}: {{ anzahl }} Accounts</li>
-            {% endfor %}
-        </ul>
+    <h2>Deine Dienste und verfügbare Accounts:</h2>
+    <ul>
+        {% for dienst, anzahl in status.items() %}
+            <li>{{ dienst }}: {{ anzahl }} Accounts verfügbar</li>
+        {% endfor %}
+    </ul>
 
-        <a href="{{ url_for('admin') }}"><button>Zum Adminbereich</button></a>
-        <a href="{{ url_for('logout') }}"><button>Logout</button></a>
-    </div>
+    {% if admin %}
+        <a href="{{ url_for('admin') }}">Admin-Bereich</a>
+    {% endif %}
 </body>
 </html>
