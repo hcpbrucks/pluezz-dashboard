@@ -1,32 +1,42 @@
 {
+  "YouTube-Premium": {
+    "Family": [],
+    "Single Account": []
+  },
+  "Crunchyroll": {
+    "Fan Account": [],
+    "Megafan Account": []
+  },
+  "Steam": {
+    "0-3 Random Games": [],
+    "4+ Random Games": [],
+    "Eurotruck Simulator 2": [],
+    "Wallpaper Engine": [],
+    "Counter Strike": [],
+    "Rainbow Six": [],
+    "Supermarket Simulator": [],
+    "Red Dead Redemption 2": [],
+    "Fc 25": [],
+    "Schedule 1": []
+  },
+  "Server": {
+    "Member 500": [],
+    "Member 1000": [],
+    "Boost 14x 1 Monat": [],
+    "Boost 14x 3 Monate": []
+  },
+  "Adobe-Creative-Cloud": {
+    "1 Monat key": [],
+    "Livetime Account": []
+  },
   "Netflix": [],
   "Spotify": [],
   "Disney": [],
   "Dazn": [],
   "Paramount": [],
   "Prime-Video": [],
-  "YouTube-Premium Family": [],
-  "YouTube-Premium Single Account": [],
-  "Crunchyroll Fan Account": [],
-  "Crunchyroll Megafan Account": [],
-  "Steam 0-3 Random Games": [],
-  "Steam 4+ Random Games": [],
-  "Steam Eurotruck Simulator 2": [],
-  "Steam Wallpaper Engine": [],
-  "Steam Counter Strike": [],
-  "Steam Rainbow Six": [],
-  "Steam Supermarket Simulator": [],
-  "Steam Red Dead Redemption 2": [],
-  "Steam Fc 25": [],
-  "Steam Schedule 1": [],
-  "GTA-activation-Key": [],
-  "Server-Member 500": [],
-  "Server-Member 1000": [],
-  "Server-Boost 14x 1 Monat": [],
-  "Server-Boost 14x 3 Monate": [],
   "Nord-Vpn": [],
   "CapCut-Pro": [],
   "Canva": [],
-  "Adobe-Creative-Cloud 1 Monat key": [],
-  "Adobe-Creative-Cloud Livetime Account": []
+  "GTA-activation-Key": []
 }
