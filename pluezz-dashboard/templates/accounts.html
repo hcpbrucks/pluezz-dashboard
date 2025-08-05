@@ -83,5 +83,14 @@
       {% endfor %}
     </tbody>
   </table>
+
+  <!-- Optional: Formular zum Hinzufügen neuer Accounts -->
+  <h2>Neuen Account hinzufügen</h2>
+  <form method="post" action="/add_account">
+    <label>Dienst: <input type="text" name="service" required></label><br><br>
+    <label>E-Mail: <input type="email" name="email" required></label><br><br>
+    <label>Passwort / Key: <input type="text" name="password" required></label><br><br>
+    <button type="submit">Hinzufügen</button>
+  </form>
 </body>
 </html>
