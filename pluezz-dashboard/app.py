@@ -1,136 +1,77 @@
-import os
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import json
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dein-geheimer-schluessel")
 
-# Nutzer laden (Passwörter aus Umgebungsvariablen)
-users = {
-    "paul": {
-        "password": generate_password_hash(os.getenv("PAUL_PASSWORD", "paulpass")),
-        "admin": True
-    },
-    "elias": {
-        "password": generate_password_hash(os.getenv("ELIAS_PASSWORD", "eliaspass")),
-        "admin": False
-    }
-}
-
-# Dienste-Liste (für Dropdown)
 dienste = [
-    "netflix", "spotify", "disneyplus", "gta", "crunchyroll", "youtubepremium",
-    "dazn", "nordvpn", "primevideo", "capcutpro", "chatgptplus", "steam",
-    "adobecc", "canvapremium", "paramountplus"
+  "Netflix",
+  "Spotify",
+  "Disney",
+  "Dazn",
+  "Paramount",
+  "Prime-Video",
+  "YouTube-Premium Family",
+  "YouTube-Premium Single Account",
+  "Crunchyroll Fan Account",
+  "Crunchyroll Megafan Account",
+  "Steam 0-3 Random Games",
+  "Steam 4+ Random Games",
+  "Steam Eurotruck Simulator 2",
+  "Steam Wallpaper Engine",
+  "Steam Counter Strike",
+  "Steam Rainbow Six",
+  "Steam Supermarket Simulator",
+  "Steam Red Dead Redemption 2",
+  "Steam Fc 25",
+  "Steam Schedule 1",
+  "GTA-activation-Key",
+  "Server-Member 500",
+  "Server-Member 1000",
+  "Server-Boost 14x 1 Monat",
+  "Server-Boost 14x 3 Monate",
+  "Nord-Vpn",
+  "CapCut-Pro",
+  "Canva",
+  "Adobe-Creative-Cloud 1 Monat key",
+  "Adobe-Creative-Cloud Livetime Account"
 ]
 
-# Lade accounts.json (oder leeres dict)
 def load_accounts():
     try:
         with open("accounts.json", "r") as f:
             return json.load(f)
     except FileNotFoundError:
-        return {}
+        return {dienst: [] for dienst in dienste}
 
-# Speichere accounts.json
 def save_accounts(accounts):
     with open("accounts.json", "w") as f:
         json.dump(accounts, f, indent=4)
-
-# Lade users.json (für Admin neu hinzufügen)
-def load_users_file():
-    try:
-        with open("users.json", "r") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {}
-
-# Speichere users.json
-def save_users_file(users_file):
-    with open("users.json", "w") as f:
-        json.dump(users_file, f, indent=4)
-
-@app.route("/")
-def home():
-    if session.get("user"):
-        return redirect(url_for("dashboard"))
-    return redirect(url_for("login"))
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form.get("username").lower()
-        password = request.form.get("password")
-        
-        user = users.get(username)
-        if not user:
-            users_file = load_users_file()
-            if username in users_file:
-                user = users_file[username]
-        
-        if user and check_password_hash(user["password"], password):
-            session["user"] = username
-            session["admin"] = user.get("admin", False)
-            return redirect(url_for("dashboard"))
-        else:
-            return render_template("login.html", error="Falscher Benutzername oder Passwort.")
-    return render_template("login.html")
-
-@app.route("/dashboard")
-def dashboard():
-    if not session.get("user"):
-        return redirect(url_for("login"))
-
-    accounts = load_accounts()
-    status = {dienst: len(accounts.get(dienst, [])) for dienst in dienste}
-
-    return render_template("dashboard.html", user=session["user"], admin=session["admin"], status=status)
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("login"))
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
     if not session.get("user") or not session.get("admin"):
         flash("Du hast keine Berechtigung für diesen Bereich.")
         return redirect(url_for("login"))
-    
+
     accounts = load_accounts()
-    users_file = load_users_file()
     status = {dienst: len(accounts.get(dienst, [])) for dienst in dienste}
 
+    # Wenn POST und JSON-Request: Account löschen per AJAX
     if request.method == "POST":
-        if "add_account" in request.form:
-            dienst = request.form.get("dienst")
-            daten = request.form.get("daten").strip()
-            if dienst and daten:
-                neue_accounts = [line.strip() for line in daten.splitlines() if line.strip()]
-                if dienst not in accounts:
-                    accounts[dienst] = []
-                accounts[dienst].extend(neue_accounts)
-                save_accounts(accounts)
-                flash(f"{len(neue_accounts)} Accounts für {dienst} hinzugefügt.")
-                return redirect(url_for("admin"))
-
-        elif "add_user" in request.form:
-            username = request.form.get("username").lower()
-            password = request.form.get("password")
-            admin_rechte = bool(request.form.get("admin"))
-            if username and password:
-                if username in users or username in users_file:
-                    flash("Benutzer existiert bereits.")
-                else:
-                    hashed_pw = generate_password_hash(password)
-                    users_file[username] = {"password": hashed_pw, "admin": admin_rechte}
-                    save_users_file(users_file)
-                    flash(f"Benutzer {username} erfolgreich erstellt.")
-                return redirect(url_for("admin"))
+        if request.is_json:
+            data = request.get_json()
+            dienst = data.get("dienst")
+            account = data.get("account")
+            if dienst and account and dienst in accounts:
+                if account in accounts[dienst]:
+                    accounts[dienst].remove(account)
+                    save_accounts(accounts)
+                    return jsonify({"success": True})
+            return jsonify({"success": False, "error": "Account oder Dienst nicht gefunden"}), 400
+        else:
+            flash("Ungültige Anfrage.")
+            return redirect(url_for("admin"))
 
     return render_template("admin.html", status=status, dienste=dienste)
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
