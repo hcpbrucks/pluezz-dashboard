@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 import json
 import os
 
@@ -35,7 +35,6 @@ def save_json(filename, data):
 
 def load_users():
     users = load_json_safe(USERS_FILE, {})
-    # Initiale Benutzer über Umgebungsvariablen
     paul_pw = os.getenv("PAUL_PASSWORD")
     elias_pw = os.getenv("ELIAS_PASSWORD")
 
@@ -101,29 +100,13 @@ def dashboard():
     status = {dienst: len(accounts.get(dienst, [])) for dienst in dienste}
     return render_template("dashboard.html", status=status, dienste=dienste)
 
-# DIENSTSEITE MIT EINZELNEM LÖSCHEN
-@app.route("/dienst/<dienst>/delete", methods=["POST"])
-def delete_account(dienst):
+# DIENSTSEITE
+@app.route("/dienst/<dienst>", methods=["GET", "POST"])
+def dienst(dienst):
     if "user" not in session:
         return redirect(url_for("login"))
     if dienst not in dienste:
         abort(404)
-
-    account_index = request.form.get("index")
-    accounts = load_accounts()
-    dienst_accounts = accounts.get(dienst, [])
-
-    try:
-        index = int(account_index)
-        if 0 <= index < len(dienst_accounts):
-            gelöscht = dienst_accounts.pop(index)
-            accounts[dienst] = dienst_accounts
-            save_accounts(accounts)
-            flash(f"Account gelöscht: {gelöscht}")
-    except:
-        flash("Fehler beim Löschen.")
-
-    return redirect(url_for("dienst", dienst=dienst))
 
     accounts = load_accounts()
     dienst_accounts = accounts.get(dienst, [])
@@ -131,24 +114,33 @@ def delete_account(dienst):
 
     if request.method == "POST":
         if "abrufen" in request.form:
-            anzahl = int(request.form.get("anzahl", 1))
-            if anzahl < 1:
+            try:
+                anzahl = int(request.form.get("anzahl", 1))
+                if anzahl < 1:
+                    anzahl = 1
+            except ValueError:
                 anzahl = 1
             ausgewählte_accounts = dienst_accounts[:anzahl]
 
         elif "loesche_index" in request.form:
-            index = int(request.form.get("loesche_index"))
-            if 0 <= index < len(dienst_accounts):
-                gelöscht = dienst_accounts.pop(index)
-                accounts[dienst] = dienst_accounts
-                save_accounts(accounts)
-                flash(f"Account gelöscht: {gelöscht}")
+            try:
+                index = int(request.form.get("loesche_index"))
+                if 0 <= index < len(dienst_accounts):
+                    gelöscht = dienst_accounts.pop(index)
+                    accounts[dienst] = dienst_accounts
+                    save_accounts(accounts)
+                    flash(f"Account gelöscht: {gelöscht}")
+            except (ValueError, IndexError):
+                flash("Fehler beim Löschen.")
             # Wieder anzeigen der ursprünglichen Anzahl
             try:
                 zuletzt_anzahl = int(request.form.get("anzahl_alt", 1))
                 ausgewählte_accounts = dienst_accounts[:zuletzt_anzahl]
-            except:
+            except ValueError:
                 ausgewählte_accounts = dienst_accounts
+    else:
+        # Standardmäßig nichts ausgewählt, aber man kann z.B. 5 anzeigen
+        ausgewählte_accounts = []
 
     return render_template("dienst.html", dienst=dienst, accounts=ausgewählte_accounts)
 
