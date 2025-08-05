@@ -3,39 +3,18 @@ import json
 import os
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "dein-geheimer-schluessel")
+app.secret_key = os.getenv("SECRET_KEY", "dein-geheimer_schluessel")
 
-# Dienste-Liste
 dienste = [
-    "Netflix",
-    "Spotify",
-    "Disney",
-    "Dazn",
-    "Paramount",
-    "Prime-Video",
-    "YouTube-Premium Family",
-    "YouTube-Premium Single Account",
-    "Crunchyroll Fan Account",
-    "Crunchyroll Megafan Account",
-    "Steam 0-3 Random Games",
-    "Steam 4+ Random Games",
-    "Steam Eurotruck Simulator 2",
-    "Steam Wallpaper Engine",
-    "Steam Counter Strike",
-    "Steam Rainbow Six",
-    "Steam Supermarket Simulator",
-    "Steam Red Dead Redemption 2",
-    "Steam Fc 25",
-    "Steam Schedule 1",
-    "GTA-activation-Key",
-    "Server-Member 500",
-    "Server-Member 1000",
-    "Server-Boost 14x 1 Monat",
-    "Server-Boost 14x 3 Monate",
-    "Nord-Vpn",
-    "CapCut-Pro",
-    "Canva",
-    "Adobe-Creative-Cloud 1 Monat key",
+    "Netflix", "Spotify", "Disney", "Dazn", "Paramount", "Prime-Video",
+    "YouTube-Premium Family", "YouTube-Premium Single Account",
+    "Crunchyroll Fan Account", "Crunchyroll Megafan Account",
+    "Steam 0-3 Random Games", "Steam 4+ Random Games",
+    "Steam Eurotruck Simulator 2", "Steam Wallpaper Engine", "Steam Counter Strike",
+    "Steam Rainbow Six", "Steam Supermarket Simulator", "Steam Red Dead Redemption 2",
+    "Steam Fc 25", "Steam Schedule 1", "GTA-activation-Key", "Server-Member 500",
+    "Server-Member 1000", "Server-Boost 14x 1 Monat", "Server-Boost 14x 3 Monate",
+    "Nord-Vpn", "CapCut-Pro", "Canva", "Adobe-Creative-Cloud 1 Monat key",
     "Adobe-Creative-Cloud Livetime Account"
 ]
 
@@ -53,11 +32,22 @@ def save_json(filename, data):
     with open(filename, "w") as f:
         json.dump(data, f, indent=4)
 
+def save_users(users):
+    save_json(USERS_FILE, users)
+
 def load_users():
-    return load_json_safe(USERS_FILE, {
-        "admin": {"password": "adminpass", "admin": True},
-        "user": {"password": "userpass", "admin": False}
-    })
+    users = load_json_safe(USERS_FILE, {})
+
+    paul_pw = os.getenv("PAUL_PASSWORD")
+    elias_pw = os.getenv("ELIAS_PASSWORD")
+
+    if paul_pw and "paul" not in users:
+        users["paul"] = {"password": paul_pw, "admin": True}
+    if elias_pw and "elias" not in users:
+        users["elias"] = {"password": elias_pw, "admin": True}
+
+    save_users(users)
+    return users
 
 def load_accounts():
     return load_json_safe(ACCOUNTS_FILE, {dienst: [] for dienst in dienste})
@@ -65,11 +55,13 @@ def load_accounts():
 def save_accounts(accounts):
     save_json(ACCOUNTS_FILE, accounts)
 
-def save_users(users):
-    save_json(USERS_FILE, users)
+# Umleitung auf Login-Seite bei /
+@app.route("/")
+def home_redirect():
+    return redirect(url_for("login"))
 
 # Login Route
-@app.route("/", methods=["GET", "POST", "HEAD"])
+@app.route("/login", methods=["GET", "POST", "HEAD"])
 def login():
     if request.method == "HEAD":
         return ""
@@ -93,13 +85,11 @@ def login():
 
     return render_template("login.html", error=error)
 
-# Logout Route
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("login"))
 
-# Dashboard mit Bestandsübersicht
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
@@ -108,7 +98,6 @@ def dashboard():
     status = {dienst: len(accounts.get(dienst, [])) for dienst in dienste}
     return render_template("dashboard.html", status=status, dienste=dienste)
 
-# Diensteseite für Account Abruf + Löschen
 @app.route("/dienst/<dienst>", methods=["GET", "POST"])
 def dienst(dienst):
     if "user" not in session:
@@ -134,7 +123,6 @@ def dienst(dienst):
 
     return render_template("dienst.html", dienst=dienst, accounts=None)
 
-# Admin-Bereich mit Lagerstatus & POST-Methoden zum Hinzufügen
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
     if "user" not in session or not session.get("admin"):
@@ -144,7 +132,6 @@ def admin():
     accounts = load_accounts()
     users = load_users()
 
-    # Status: 🟢🟠🔴❌
     status = {}
     for dienst in dienste:
         count = len(accounts.get(dienst, []))
