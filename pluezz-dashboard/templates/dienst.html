@@ -2,74 +2,104 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Deine Dienste - Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <title>{{ dienst }} - Accounts</title>
     <style>
         body {
-            background: linear-gradient(135deg, #4a90e2, #50e3c2);
-            color: #fff;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            background-color: #1e1e2f;
+            color: #ddd;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
         }
-        .container {
-            margin-top: 50px;
-            max-width: 900px;
-        }
-        h1 {
-            font-weight: 700;
+        header {
             margin-bottom: 30px;
-            text-align: center;
-            text-shadow: 1px 1px 4px rgba(0,0,0,0.4);
         }
-        .dienst-button {
-            margin: 10px 15px;
-            width: 220px;
-            height: 80px;
-            font-size: 1.25rem;
-            font-weight: 600;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
-            text-transform: uppercase;
+        a {
+            color: #4e5cff;
+            text-decoration: none;
+            font-weight: bold;
         }
-        .dienst-button:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        a:hover {
+            color: #3b47d9;
         }
-        .bestand-badge {
-            font-size: 0.9rem;
-            margin-left: 8px;
-            background-color: #ff6b6b;
-            border-radius: 12px;
-            padding: 2px 10px;
+        form {
+            background-color: #2a2a40;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+        }
+        input[type="number"] {
+            width: 80px;
+            padding: 6px;
+            border-radius: 5px;
+            border: none;
+            margin-right: 10px;
+        }
+        label {
+            margin-right: 10px;
+        }
+        button {
+            background-color: #4e5cff;
             color: white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #3b47d9;
+        }
+        ul {
+            background-color: #2a2a40;
+            border-radius: 8px;
+            padding: 15px;
+            max-width: 600px;
+            list-style-type: none;
+        }
+        ul li {
+            padding: 8px;
+            border-bottom: 1px solid #444;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        ul li:last-child {
+            border-bottom: none;
+        }
+        .nav-links {
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container text-center">
-        <h1>Willkommen, {{ session["user"] }}!</h1>
-        <p>Wähle einen Dienst aus, um die Accounts zu sehen oder abzurufen.</p>
-        <div class="d-flex flex-wrap justify-content-center">
-            {% for dienst in dienste %}
-            <form method="GET" action="{{ url_for('accounts') }}">
-                <input type="hidden" name="dienst" value="{{ dienst }}">
-                <button type="submit" class="btn btn-primary dienst-button">
-                    {{ dienst }}
-                    <span class="bestand-badge">{{ bestand[dienst] }}</span>
-                </button>
-            </form>
-            {% endfor %}
+    <header>
+        <h1>{{ dienst }} - Accounts</h1>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}">Zurück zum Dashboard</a> |
+            <a href="{{ url_for('logout') }}">Logout</a>
         </div>
-        <div class="mt-5">
-            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-lg">Logout</a>
-            {% if session.get("admin") %}
-                <a href="{{ url_for('admin') }}" class="btn btn-warning btn-lg ms-3">Admin-Bereich</a>
-            {% endif %}
-        </div>
-    </div>
+    </header>
+
+    <form method="POST">
+        <label for="anzahl">Anzahl:</label>
+        <input type="number" id="anzahl" name="anzahl" min="1" value="1" required />
+        <label for="loeschen">Nach Abruf löschen</label>
+        <input type="checkbox" id="loeschen" name="loeschen" />
+        <button type="submit">Accounts abrufen</button>
+    </form>
+
+    {% if accounts is not none %}
+        <h2>Abgerufene Accounts:</h2>
+        {% if accounts|length == 0 %}
+            <p>Keine Accounts verfügbar.</p>
+        {% else %}
+            <ul>
+                {% for acc in accounts %}
+                    <li>{{ acc }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endif %}
 </body>
 </html>
