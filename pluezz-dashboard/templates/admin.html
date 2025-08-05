@@ -52,4 +52,115 @@
         }
         input[type="text"], input[type="password"], select {
             width: 100%;
-            padding
+            padding: 10px;
+            margin-top: 8px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #3b3b5c;
+            color: #ddd;
+        }
+        input[type="submit"] {
+            background-color: #4e5cff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        input[type="submit"]:hover {
+            background-color: #3b47d9;
+        }
+        .flash {
+            background-color: #444466;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Admin-Bereich</h1>
+        <a href="{{ url_for('dashboard') }}">Zurück zum Dashboard</a>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <h2>Status der Dienste</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Dienst</th>
+                <th>Anzahl Accounts</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dienst, info in status.items() %}
+            <tr>
+                <td>{{ dienst }}</td>
+                <td>{{ info.count }}</td>
+                <td>{{ info.icon }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Accounts hinzufügen</h2>
+    <form method="post">
+        <input type="hidden" name="action" value="add_account" />
+        <label for="dienst">Dienst:</label>
+        <select name="dienst" id="dienst" required>
+            {% for d in dienste %}
+            <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="account">Account-Daten (z.B. E-Mail; Passwort):</label>
+        <input type="text" name="account" id="account" required />
+
+        <input type="submit" value="Account hinzufügen" />
+    </form>
+
+    <h2>Benutzer hinzufügen</h2>
+    <form method="post">
+        <input type="hidden" name="action" value="add_user" />
+        <label for="username">Benutzername:</label>
+        <input type="text" name="username" id="username" required />
+
+        <label for="password">Passwort:</label>
+        <input type="password" name="password" id="password" required />
+
+        <label for="admin">Adminrechte:</label>
+        <input type="checkbox" name="admin" id="admin" />
+
+        <input type="submit" value="Benutzer hinzufügen" />
+    </form>
+
+    <h2>Bestehende Benutzer</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Benutzername</th>
+                <th>Admin</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for username, user in users.items() %}
+            <tr>
+                <td>{{ username }}</td>
+                <td>{{ "Ja" if user.admin else "Nein" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
