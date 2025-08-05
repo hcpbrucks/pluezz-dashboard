@@ -21,7 +21,6 @@ dienste = [
 USERS_FILE = "users.json"
 ACCOUNTS_FILE = "accounts.json"
 
-# JSON Utilities
 def load_json_safe(filename, default):
     try:
         with open(filename, "r") as f:
@@ -50,17 +49,16 @@ def save_users(users):
     save_json(USERS_FILE, users)
 
 def load_accounts():
+    # Struktur: {dienst: [ {service, email, password}, ... ], ... }
     return load_json_safe(ACCOUNTS_FILE, {dienst: [] for dienst in dienste})
 
 def save_accounts(accounts):
     save_json(ACCOUNTS_FILE, accounts)
 
-# Umleitung auf Login-Seite
 @app.route("/")
 def home():
     return redirect(url_for("login"))
 
-# LOGIN
 @app.route("/login", methods=["GET", "POST", "HEAD"])
 def login():
     if request.method == "HEAD":
@@ -85,13 +83,11 @@ def login():
 
     return render_template("login.html", error=error)
 
-# LOGOUT
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("login"))
 
-# DASHBOARD
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
@@ -100,7 +96,6 @@ def dashboard():
     status = {dienst: len(accounts.get(dienst, [])) for dienst in dienste}
     return render_template("dashboard.html", status=status, dienste=dienste)
 
-# DIENSTSEITE
 @app.route("/dienst/<dienst>", methods=["GET", "POST"])
 def dienst(dienst):
     if "user" not in session:
@@ -132,19 +127,47 @@ def dienst(dienst):
                     flash(f"Account gelöscht: {gelöscht}")
             except (ValueError, IndexError):
                 flash("Fehler beim Löschen.")
-            # Wieder anzeigen der ursprünglichen Anzahl
             try:
                 zuletzt_anzahl = int(request.form.get("anzahl_alt", 1))
                 ausgewählte_accounts = dienst_accounts[:zuletzt_anzahl]
             except ValueError:
                 ausgewählte_accounts = dienst_accounts
     else:
-        # Standardmäßig nichts ausgewählt, aber man kann z.B. 5 anzeigen
         ausgewählte_accounts = []
 
     return render_template("dienst.html", dienst=dienst, accounts=ausgewählte_accounts)
 
-# ADMIN-BEREICH
+# NEUE ROUTE FÜR ACCOUNT-LÖSCHEN ÜBER accounts.html
+@app.route("/delete_account", methods=["POST"])
+def delete_account():
+    if "user" not in session:
+        return redirect(url_for("login"))
+    if not session.get("admin"):
+        flash("Du hast keine Berechtigung dafür.")
+        return redirect(url_for("dashboard"))
+
+    service = request.form.get("service")
+    email = request.form.get("email")
+
+    if not service or not email:
+        flash("Ungültige Daten zum Löschen.")
+        return redirect(url_for("dashboard"))
+
+    accounts = load_accounts()
+    dienst_accounts = accounts.get(service, [])
+
+    # Suche und lösche Account mit passender Email
+    neu_accounts = [acc for acc in dienst_accounts if acc.get("email") != email]
+
+    if len(neu_accounts) == len(dienst_accounts):
+        flash("Account nicht gefunden oder bereits gelöscht.", "error")
+    else:
+        accounts[service] = neu_accounts
+        save_accounts(accounts)
+        flash(f"Account für {email} bei {service} gelöscht.")
+
+    return redirect(url_for("dashboard"))
+
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
     if "user" not in session or not session.get("admin"):
@@ -174,9 +197,18 @@ def admin():
             dienst_name = request.form.get("dienst")
             account_data = request.form.get("account")
             if dienst_name in dienste and account_data:
-                accounts.setdefault(dienst_name, []).append(account_data)
-                save_accounts(accounts)
-                flash(f"Account zu {dienst_name} hinzugefügt.")
+                # Wir erwarten account_data als JSON-string, den wir parsen und speichern
+                try:
+                    import json as js
+                    acc_obj = js.loads(account_data)
+                    if all(k in acc_obj for k in ("service", "email", "password")):
+                        accounts.setdefault(dienst_name, []).append(acc_obj)
+                        save_accounts(accounts)
+                        flash(f"Account zu {dienst_name} hinzugefügt.")
+                    else:
+                        flash("Account muss service, email und password enthalten.", "error")
+                except js.JSONDecodeError:
+                    flash("Ungültiges JSON für Account.", "error")
             else:
                 flash("Ungültige Eingabe beim Hinzufügen eines Accounts.", "error")
 
@@ -198,7 +230,6 @@ def admin():
 
     return render_template("admin.html", status=status, dienste=dienste, users=users)
 
-# START
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
