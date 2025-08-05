@@ -60,7 +60,7 @@
             background-color: #3b3b5c;
             color: #ddd;
         }
-        input[type="submit"] {
+        input[type="submit"], button[type="submit"] {
             background-color: #4e5cff;
             color: white;
             border: none;
@@ -69,7 +69,7 @@
             cursor: pointer;
             font-weight: bold;
         }
-        input[type="submit"]:hover {
+        input[type="submit"]:hover, button[type="submit"]:hover {
             background-color: #3b47d9;
         }
         .flash {
@@ -115,19 +115,23 @@
     </table>
 
     <h2>Accounts hinzufügen</h2>
-    <form method="post">
+    <form method="POST" action="{{ url_for('admin') }}">
         <input type="hidden" name="action" value="add_account" />
+
         <label for="dienst">Dienst:</label>
         <select name="dienst" id="dienst" required>
             {% for d in dienste %}
-            <option value="{{ d }}">{{ d }}</option>
+                <option value="{{ d }}">{{ d }}</option>
             {% endfor %}
         </select>
 
-        <label for="account">Account-Daten (z.B. E-Mail; Passwort):</label>
-        <input type="text" name="account" id="account" required />
+        <label for="email">E-Mail / Benutzername / Key:</label>
+        <input type="text" name="email" id="email" required />
 
-        <input type="submit" value="Account hinzufügen" />
+        <label for="password">Passwort / Key / Sonstiges:</label>
+        <input type="text" name="password" id="password" required />
+
+        <button type="submit">Account hinzufügen</button>
     </form>
 
     <h2>Benutzer hinzufügen</h2>
