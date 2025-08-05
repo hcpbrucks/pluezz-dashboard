@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 import json
 import os
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dein-geheimer_schluessel")
 
+# Liste der Dienste (Produkte)
 dienste = [
     "Netflix", "Spotify", "Disney", "Dazn", "Paramount", "Prime-Video",
     "YouTube-Premium Family", "YouTube-Premium Single Account",
@@ -23,20 +24,21 @@ ACCOUNTS_FILE = "accounts.json"
 
 def load_json_safe(filename, default):
     try:
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding="utf-8") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return default
 
 def save_json(filename, data):
-    with open(filename, "w") as f:
-        json.dump(data, f, indent=4)
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
 def load_users():
     users = load_json_safe(USERS_FILE, {})
     paul_pw = os.getenv("PAUL_PASSWORD")
     elias_pw = os.getenv("ELIAS_PASSWORD")
 
+    # Automatisch Admin-Nutzer hinzufügen, wenn noch nicht da
     if paul_pw and "paul" not in users:
         users["paul"] = {"password": paul_pw, "admin": True}
     if elias_pw and "elias" not in users:
@@ -50,7 +52,15 @@ def save_users(users):
 
 def load_accounts():
     # Struktur: {dienst: [ {service, email, password}, ... ], ... }
-    return load_json_safe(ACCOUNTS_FILE, {dienst: [] for dienst in dienste})
+    # Falls Datei leer oder fehlt, erstelle leeres Dict mit allen Diensten als Key und leeren Listen
+    data = load_json_safe(ACCOUNTS_FILE, None)
+    if data is None or not isinstance(data, dict):
+        return {dienst: [] for dienst in dienste}
+    # Prüfe, ob alle Dienste vorhanden, wenn nicht, füge sie hinzu
+    for d in dienste:
+        if d not in data:
+            data[d] = []
+    return data
 
 def save_accounts(accounts):
     save_json(ACCOUNTS_FILE, accounts)
@@ -69,8 +79,8 @@ def login():
 
     error = None
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
         users = load_users()
 
         user = users.get(username)
@@ -93,6 +103,7 @@ def dashboard():
     if "user" not in session:
         return redirect(url_for("login"))
     accounts = load_accounts()
+    # Status = Anzahl Accounts pro Dienst
     status = {dienst: len(accounts.get(dienst, [])) for dienst in dienste}
     return render_template("dashboard.html", status=status, dienste=dienste)
 
@@ -137,7 +148,6 @@ def dienst(dienst):
 
     return render_template("dienst.html", dienst=dienst, accounts=ausgewählte_accounts)
 
-# Route für Account-Löschen aus dashboard oder dienst-Seite
 @app.route("/delete_account", methods=["POST"])
 def delete_account():
     if "user" not in session:
@@ -156,7 +166,6 @@ def delete_account():
     accounts = load_accounts()
     dienst_accounts = accounts.get(service, [])
 
-    # Suche und lösche Account mit passender Email
     neu_accounts = [acc for acc in dienst_accounts if acc.get("email") != email]
 
     if len(neu_accounts) == len(dienst_accounts):
@@ -167,6 +176,33 @@ def delete_account():
         flash(f"Account für {email} bei {service} gelöscht.")
 
     return redirect(url_for("dashboard"))
+
+@app.route("/add_account", methods=["POST"])
+def add_account():
+    if "user" not in session:
+        return redirect(url_for("login"))
+    if not session.get("admin"):
+        flash("Du hast keine Berechtigung dafür.")
+        return redirect(url_for("dashboard"))
+
+    dienst_name = request.form.get("dienst")
+    email = request.form.get("email")
+    password = request.form.get("password")
+
+    if dienst_name in dienste and email and password:
+        acc_obj = {
+            "service": dienst_name,
+            "email": email,
+            "password": password
+        }
+        accounts = load_accounts()
+        accounts.setdefault(dienst_name, []).append(acc_obj)
+        save_accounts(accounts)
+        flash(f"Account zu {dienst_name} hinzugefügt.")
+    else:
+        flash("Bitte Dienst, E-Mail und Passwort korrekt angeben.", "error")
+
+    return redirect(url_for("admin"))
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
@@ -193,24 +229,7 @@ def admin():
     if request.method == "POST":
         action = request.form.get("action")
 
-        if action == "add_account":
-            dienst_name = request.form.get("dienst")
-            email = request.form.get("email")
-            password = request.form.get("password")
-
-            if dienst_name in dienste and email and password:
-                acc_obj = {
-                    "service": dienst_name,
-                    "email": email,
-                    "password": password
-                }
-                accounts.setdefault(dienst_name, []).append(acc_obj)
-                save_accounts(accounts)
-                flash(f"Account zu {dienst_name} hinzugefügt.")
-            else:
-                flash("Bitte Dienst, E-Mail und Passwort korrekt angeben.", "error")
-
-        elif action == "add_user":
+        if action == "add_user":
             username = request.form.get("username")
             password = request.form.get("password")
             admin_flag = request.form.get("admin") == "on"
