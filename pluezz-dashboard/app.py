@@ -1,9 +1,22 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import json
 import os
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dein-geheimer-schluessel")
+
+# Beispiel-Nutzer mit gehashten Passwörtern
+users = {
+    "paul": {
+        "password": generate_password_hash(os.getenv("PAUL_PASSWORD", "paulpass")),
+        "admin": True
+    },
+    "elias": {
+        "password": generate_password_hash(os.getenv("ELIAS_PASSWORD", "eliaspass")),
+        "admin": False
+    }
+}
 
 dienste = [
   "Netflix",
@@ -49,6 +62,40 @@ def save_accounts(accounts):
     with open("accounts.json", "w") as f:
         json.dump(accounts, f, indent=4)
 
+@app.route("/")
+def home():
+    if session.get("user"):
+        return redirect(url_for("dashboard"))
+    return redirect(url_for("login"))
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username", "").lower()
+        password = request.form.get("password", "")
+        user = users.get(username)
+        if user and check_password_hash(user["password"], password):
+            session["user"] = username
+            session["admin"] = user.get("admin", False)
+            return redirect(url_for("dashboard"))
+        else:
+            return render_template("login.html", error="Falscher Benutzername oder Passwort.")
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+@app.route("/dashboard")
+def dashboard():
+    if not session.get("user"):
+        return redirect(url_for("login"))
+
+    accounts = load_accounts()
+    status = {dienst: len(accounts.get(dienst, [])) for dienst in dienste}
+    return render_template("dashboard.html", user=session["user"], admin=session.get("admin", False), status=status)
+
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
     if not session.get("user") or not session.get("admin"):
@@ -58,7 +105,6 @@ def admin():
     accounts = load_accounts()
     status = {dienst: len(accounts.get(dienst, [])) for dienst in dienste}
 
-    # Wenn POST und JSON-Request: Account löschen per AJAX
     if request.method == "POST":
         if request.is_json:
             data = request.get_json()
@@ -75,3 +121,7 @@ def admin():
             return redirect(url_for("admin"))
 
     return render_template("admin.html", status=status, dienste=dienste)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
