@@ -1,252 +1,294 @@
+import tkinter as tk
+from tkinter import ttk, messagebox, simpledialog, filedialog
 import json
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 
-app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "dein-geheimer_schluessel")
+# --- Dateipfade ---
+ACCOUNTS_FILE = "accounts.json"
+USERS_FILE = "users.json"
 
-# Liste der Dienste (Produkte)
+# --- Dienste mit (optionalen) Icon-Pfaden (Platzhalter) ---
 dienste = [
-    "Netflix", "Spotify", "Disney", "Dazn", "Paramount", "Prime-Video",
-    "YouTube-Premium Family", "YouTube-Premium Single Account",
-    "Crunchyroll Fan Account", "Crunchyroll Megafan Account",
-    "Steam 0-3 Random Games", "Steam 4+ Random Games",
-    "Steam Eurotruck Simulator 2", "Steam Wallpaper Engine", "Steam Counter Strike",
-    "Steam Rainbow Six", "Steam Supermarket Simulator", "Steam Red Dead Redemption 2",
-    "Steam Fc 25", "Steam Schedule 1", "GTA-activation-Key", "Server-Member 500",
-    "Server-Member 1000", "Server-Boost 14x 1 Monat", "Server-Boost 14x 3 Monate",
-    "Nord-Vpn", "CapCut-Pro", "Canva", "Adobe-Creative-Cloud 1 Monat key",
-    "Adobe-Creative-Cloud Livetime Account"
+    "YouTube-Premium Family",
+    "YouTube-Premium Single Account",
+    "Crunchyroll Fan Account",
+    "Crunchyroll Megafan Account",
+    "Steam 0-3 Random Games",
+    "Steam 4+ Random Games",
+    "Steam Eurotruck Simulator 2",
+    "Steam Wallpaper Engine",
+    "Steam Counter Strike",
+    "Steam Rainbow Six",
+    "Steam Supermarket Simulator",
+    "Steam Red Dead Redemption 2",
+    "Steam Fc 25",
+    "Steam Schedule 1",
+    "Server Member 500",
+    "Server Member 1000",
+    "Server Boost 14x 1 Monat",
+    "Server Boost 14x 3 Monate",
+    "Adobe-Creative-Cloud 1 Monat key",
+    "Adobe-Creative-Cloud Livetime Account",
+    "Netflix",
+    "Spotify",
+    "Disney",
+    "Dazn",
+    "Paramount",
+    "Prime-Video",
+    "Nord-Vpn",
+    "CapCut-Pro",
+    "Canva",
+    "GTA-activation-Key"
 ]
 
-USERS_FILE = "users.json"
-ACCOUNTS_FILE = "accounts.json"
+# --- Standard-Admin ---
+DEFAULT_ADMIN = {
+    "Paul": {
+        "password": "Pluezzshop",
+        "role": "admin"
+    }
+}
 
-def load_json_safe(filename, default):
-    try:
-        with open(filename, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
+# --- Hilfsfunktionen JSON Laden/Speichern ---
+def load_json(path, default):
+    if not os.path.exists(path):
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(default, f, indent=2)
         return default
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-def save_json(filename, data):
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
+def save_json(path, data):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
 
-def load_users():
-    users = load_json_safe(USERS_FILE, {})
-    paul_pw = os.getenv("PAUL_PASSWORD")
-    elias_pw = os.getenv("ELIAS_PASSWORD")
+accounts = load_json(ACCOUNTS_FILE, {d: [] for d in dienste})
+users = load_json(USERS_FILE, DEFAULT_ADMIN)
 
-    # Automatisch Admin-Nutzer hinzufügen, wenn noch nicht da
-    if paul_pw and "paul" not in users:
-        users["paul"] = {"password": paul_pw, "admin": True}
-    if elias_pw and "elias" not in users:
-        users["elias"] = {"password": elias_pw, "admin": True}
+# --- Farb-Codierung Bestandsstatus ---
+def get_status_color(count):
+    if count == 0:
+        return "red", "Leer"
+    elif count < 5:
+        return "orange", "Nachschub nötig"
+    elif count < 10:
+        return "yellow", "Knapp"
+    else:
+        return "green", "Auf Lager"
 
-    save_json(USERS_FILE, users)
-    return users
+# --- Login Fenster ---
+class LoginWindow(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Login")
+        self.geometry("320x180")
+        self.resizable(False, False)
 
-def save_users(users):
-    save_json(USERS_FILE, users)
+        tk.Label(self, text="Benutzername").pack(pady=5)
+        self.username_entry = tk.Entry(self)
+        self.username_entry.pack()
 
-def load_accounts():
-    # Struktur: {dienst: [ {service, email, password}, ... ], ... }
-    # Falls Datei leer oder fehlt, erstelle leeres Dict mit allen Diensten als Key und leeren Listen
-    data = load_json_safe(ACCOUNTS_FILE, None)
-    if data is None or not isinstance(data, dict):
-        return {dienst: [] for dienst in dienste}
-    # Prüfe, ob alle Dienste vorhanden, wenn nicht, füge sie hinzu
-    for d in dienste:
-        if d not in data:
-            data[d] = []
-    return data
+        tk.Label(self, text="Passwort").pack(pady=5)
+        self.password_entry = tk.Entry(self, show="*")
+        self.password_entry.pack()
 
-def save_accounts(accounts):
-    save_json(ACCOUNTS_FILE, accounts)
+        tk.Button(self, text="Login", command=self.try_login).pack(pady=10)
 
-@app.route("/")
-def home():
-    return redirect(url_for("login"))
+        self.username_entry.focus_set()
 
-@app.route("/login", methods=["GET", "POST", "HEAD"])
-def login():
-    if request.method == "HEAD":
-        return ""
+    def try_login(self):
+        username = self.username_entry.get().strip()
+        password = self.password_entry.get().strip()
 
-    if "user" in session:
-        return redirect(url_for("dashboard"))  # Direkt zum Dashboard, wenn schon eingeloggt
-
-    error = None
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "")
-        users = load_users()
-
-        user = users.get(username)
-        if user and user["password"] == password:
-            session["user"] = username
-            session["admin"] = user.get("admin", False)
-            return redirect(url_for("dashboard"))
+        if username in users and users[username]["password"] == password:
+            self.destroy()
+            MainWindow(username, users[username]["role"])
         else:
-            error = "Ungültiger Benutzername oder Passwort."
+            messagebox.showerror("Fehler", "Falsche Login-Daten!")
 
-    return render_template("login.html", error=error)
+# --- Hauptfenster mit Tabs ---
+class MainWindow(tk.Tk):
+    def __init__(self, username, role):
+        super().__init__()
+        self.title(f"Account-Manager - Angemeldet als {username} ({role})")
+        self.geometry("900x600")
+        self.minsize(800, 500)
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("login"))
+        self.username = username
+        self.role = role
 
-@app.route("/dashboard")
-def dashboard():
-    if "user" not in session:
-        return redirect(url_for("login"))
-    accounts = load_accounts()
-    # Status = Anzahl Accounts pro Dienst
-    status = {dienst: len(accounts.get(dienst, [])) for dienst in dienste}
-    return render_template("dashboard.html", status=status, dienste=dienste)
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(fill="both", expand=True)
 
-@app.route("/dienst/<dienst>", methods=["GET", "POST"])
-def dienst(dienst):
-    if "user" not in session:
-        return redirect(url_for("login"))
-    if dienst not in dienste:
-        abort(404)
+        self.create_overview_tab()
+        self.create_restock_tab()
+        if self.role == "admin":
+            self.create_admin_tab()
 
-    accounts = load_accounts()
-    dienst_accounts = accounts.get(dienst, [])
-    ausgewählte_accounts = []
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.mainloop()
 
-    if request.method == "POST":
-        if "abrufen" in request.form:
-            try:
-                anzahl = int(request.form.get("anzahl", 1))
-                if anzahl < 1:
-                    anzahl = 1
-            except ValueError:
-                anzahl = 1
-            ausgewählte_accounts = dienst_accounts[:anzahl]
+    # --- Übersicht mit Suchfilter ---
+    def create_overview_tab(self):
+        frame = ttk.Frame(self.notebook)
+        self.notebook.add(frame, text="Übersicht")
 
-        elif "loesche_index" in request.form:
-            try:
-                index = int(request.form.get("loesche_index"))
-                if 0 <= index < len(dienst_accounts):
-                    gelöscht = dienst_accounts.pop(index)
-                    accounts[dienst] = dienst_accounts
-                    save_accounts(accounts)
-                    flash(f"Account gelöscht: {gelöscht}")
-            except (ValueError, IndexError):
-                flash("Fehler beim Löschen.")
-            try:
-                zuletzt_anzahl = int(request.form.get("anzahl_alt", 1))
-                ausgewählte_accounts = dienst_accounts[:zuletzt_anzahl]
-            except ValueError:
-                ausgewählte_accounts = dienst_accounts
-    else:
-        ausgewählte_accounts = []
+        search_frame = ttk.Frame(frame)
+        search_frame.pack(fill="x", pady=5, padx=5)
+        ttk.Label(search_frame, text="Suchen:").pack(side="left")
+        self.search_var = tk.StringVar()
+        search_entry = ttk.Entry(search_frame, textvariable=self.search_var)
+        search_entry.pack(side="left", fill="x", expand=True, padx=5)
+        search_entry.bind("<KeyRelease>", self.update_overview_list)
 
-    return render_template("dienst.html", dienst=dienst, accounts=ausgewählte_accounts)
+        # Treeview mit Spalten Dienst, Anzahl, Status
+        columns = ("Dienst", "Anzahl", "Status")
+        self.tree = ttk.Treeview(frame, columns=columns, show="headings", selectmode="browse")
+        for col in columns:
+            self.tree.heading(col, text=col)
+            self.tree.column(col, width=300 if col=="Dienst" else 100, anchor="center")
+        self.tree.pack(fill="both", expand=True, padx=5, pady=5)
 
-@app.route("/delete_account", methods=["POST"])
-def delete_account():
-    if "user" not in session:
-        return redirect(url_for("login"))
-    if not session.get("admin"):
-        flash("Du hast keine Berechtigung dafür.")
-        return redirect(url_for("dashboard"))
+        # Buttons
+        btn_frame = ttk.Frame(frame)
+        btn_frame.pack(fill="x", pady=5)
+        ttk.Button(btn_frame, text="Account abrufen", command=self.on_account_abrufen).pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="Löschen", command=self.on_account_loeschen).pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="Aktualisieren", command=self.update_overview_list).pack(side="left", padx=5)
 
-    service = request.form.get("service")
-    email = request.form.get("email")
+        self.update_overview_list()
 
-    if not service or not email:
-        flash("Ungültige Daten zum Löschen.")
-        return redirect(url_for("dashboard"))
+    def update_overview_list(self, event=None):
+        filter_text = self.search_var.get().lower()
+        self.tree.delete(*self.tree.get_children())
+        for dienst, acc_list in accounts.items():
+            if filter_text and filter_text not in dienst.lower():
+                continue
+            count = len(acc_list)
+            color, status = get_status_color(count)
+            self.tree.insert("", "end", values=(dienst, count, status), tags=(color,))
+        # Farben zuweisen
+        self.tree.tag_configure("red", foreground="red")
+        self.tree.tag_configure("orange", foreground="orange")
+        self.tree.tag_configure("yellow", foreground="goldenrod")
+        self.tree.tag_configure("green", foreground="green")
 
-    accounts = load_accounts()
-    dienst_accounts = accounts.get(service, [])
+    def on_account_abrufen(self):
+        selected = self.tree.selection()
+        if not selected:
+            messagebox.showwarning("Warnung", "Bitte Dienst auswählen")
+            return
+        dienst = self.tree.item(selected[0])["values"][0]
+        if len(accounts[dienst]) == 0:
+            messagebox.showerror("Fehler", "Keine Accounts verfügbar")
+            return
+        account = accounts[dienst].pop(0)
+        save_json(ACCOUNTS_FILE, accounts)
+        messagebox.showinfo("Account abgerufen", f"Account für {dienst}:\n{account}")
+        self.update_overview_list()
 
-    neu_accounts = [acc for acc in dienst_accounts if acc.get("email") != email]
+    def on_account_loeschen(self):
+        selected = self.tree.selection()
+        if not selected:
+            messagebox.showwarning("Warnung", "Bitte Dienst auswählen")
+            return
+        dienst = self.tree.item(selected[0])["values"][0]
+        if len(accounts[dienst]) == 0:
+            messagebox.showerror("Fehler", "Keine Accounts zum Löschen vorhanden")
+            return
 
-    if len(neu_accounts) == len(dienst_accounts):
-        flash("Account nicht gefunden oder bereits gelöscht.", "error")
-    else:
-        accounts[service] = neu_accounts
-        save_accounts(accounts)
-        flash(f"Account für {email} bei {service} gelöscht.")
+        # Liste der Accounts anzeigen, um zu löschen
+        AccountDeleteWindow(self, dienst)
 
-    return redirect(url_for("dashboard"))
+    # --- Restock Tab ---
+    def create_restock_tab(self):
+        frame = ttk.Frame(self.notebook)
+        self.notebook.add(frame, text="Restock")
 
-@app.route("/add_account", methods=["POST"])
-def add_account():
-    if "user" not in session:
-        return redirect(url_for("login"))
-    if not session.get("admin"):
-        flash("Du hast keine Berechtigung dafür.")
-        return redirect(url_for("dashboard"))
+        ttk.Label(frame, text="Dienst auswählen:").pack(pady=5)
+        self.restock_service_var = tk.StringVar()
+        self.restock_service = ttk.Combobox(frame, textvariable=self.restock_service_var, values=dienste, state="readonly")
+        self.restock_service.pack()
 
-    dienst_name = request.form.get("dienst")
-    email = request.form.get("email")
-    password = request.form.get("password")
+        ttk.Label(frame, text="Account-Daten (z.B. Email:Passwort oder Key):").pack(pady=5)
+        self.restock_entry = ttk.Entry(frame, width=80)
+        self.restock_entry.pack(pady=5)
 
-    if dienst_name in dienste and email and password:
-        acc_obj = {
-            "service": dienst_name,
-            "email": email,
-            "password": password
-        }
-        accounts = load_accounts()
-        accounts.setdefault(dienst_name, []).append(acc_obj)
-        save_accounts(accounts)
-        flash(f"Account zu {dienst_name} hinzugefügt.")
-    else:
-        flash("Bitte Dienst, E-Mail und Passwort korrekt angeben.", "error")
+        btn_frame = ttk.Frame(frame)
+        btn_frame.pack(pady=10)
+        ttk.Button(btn_frame, text="Account hinzufügen", command=self.add_account).pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="Aus Datei laden", command=self.load_accounts_from_file).pack(side="left", padx=5)
 
-    return redirect(url_for("admin"))
+    def add_account(self):
+        dienst = self.restock_service_var.get()
+        data = self.restock_entry.get().strip()
+        if not dienst:
+            messagebox.showerror("Fehler", "Bitte Dienst auswählen")
+            return
+        if not data:
+            messagebox.showerror("Fehler", "Bitte Account-Daten eingeben")
+            return
+        accounts[dienst].append(data)
+        save_json(ACCOUNTS_FILE, accounts)
+        messagebox.showinfo("Erfolg", "Account hinzugefügt")
+        self.restock_entry.delete(0, "end")
 
-@app.route("/admin", methods=["GET", "POST"])
-def admin():
-    if "user" not in session or not session.get("admin"):
-        flash("Du hast keine Berechtigung für diesen Bereich.")
-        return redirect(url_for("login"))
+    def load_accounts_from_file(self):
+        datei = filedialog.askopenfilename(title="Accounts-Datei öffnen", filetypes=[("Textdateien", "*.txt"), ("Alle Dateien", "*.*")])
+        if not datei:
+            return
+        dienst = self.restock_service_var.get()
+        if not dienst:
+            messagebox.showerror("Fehler", "Bitte Dienst auswählen bevor Sie eine Datei laden")
+            return
+        try:
+            with open(datei, "r", encoding="utf-8") as f:
+                lines = [line.strip() for line in f if line.strip()]
+            accounts[dienst].extend(lines)
+            save_json(ACCOUNTS_FILE, accounts)
+            messagebox.showinfo("Erfolg", f"{len(lines)} Accounts zu {dienst} hinzugefügt")
+        except Exception as e:
+            messagebox.showerror("Fehler", f"Datei konnte nicht geladen werden:\n{e}")
 
-    accounts = load_accounts()
-    users = load_users()
+    # --- Admin Tab ---
+    def create_admin_tab(self):
+        frame = ttk.Frame(self.notebook)
+        self.notebook.add(frame, text="Admin")
 
-    status = {}
-    for dienst in dienste:
-        count = len(accounts.get(dienst, []))
-        if count > 10:
-            icon = "🟢"
-        elif 5 <= count <= 10:
-            icon = "🟠"
-        elif 1 <= count < 5:
-            icon = "🔴"
-        else:
-            icon = "❌"
-        status[dienst] = {"count": count, "icon": icon}
+        ttk.Label(frame, text="Benutzerverwaltung").pack(pady=10)
 
-    if request.method == "POST":
-        action = request.form.get("action")
+        self.user_listbox = tk.Listbox(frame)
+        self.user_listbox.pack(fill="both", expand=True, padx=10)
 
-        if action == "add_user":
-            username = request.form.get("username")
-            password = request.form.get("password")
-            admin_flag = request.form.get("admin") == "on"
-            if username and password:
-                if username in users:
-                    flash("Benutzername existiert bereits.", "error")
-                else:
-                    users[username] = {"password": password, "admin": admin_flag}
-                    save_users(users)
-                    flash(f"Benutzer {username} hinzugefügt.")
-            else:
-                flash("Ungültige Eingabe beim Hinzufügen eines Benutzers.", "error")
+        btn_frame = ttk.Frame(frame)
+        btn_frame.pack(pady=10)
 
-        return redirect(url_for("admin"))
+        ttk.Button(btn_frame, text="Benutzer hinzufügen", command=self.admin_add_user).pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="Benutzer löschen", command=self.admin_delete_user).pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="Aktualisieren", command=self.admin_update_user_list).pack(side="left", padx=5)
 
-    return render_template("admin.html", status=status, dienste=dienste, users=users)
+        self.admin_update_user_list()
 
-if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    def admin_update_user_list(self):
+        self.user_listbox.delete(0, tk.END)
+        for user, info in users.items():
+            self.user_listbox.insert(tk.END, f"{user} ({info['role']})")
+
+    def admin_add_user(self):
+        dialog = UserDialog(self, "Benutzer hinzufügen")
+        self.wait_window(dialog)
+        if dialog.result:
+            username, password, role = dialog.result
+            if username in users:
+                messagebox.showerror("Fehler", "Benutzer existiert bereits")
+                return
+            users[username] = {"password": password, "role": role}
+            save_json(USERS_FILE, users)
+            self.admin_update_user_list()
+            messagebox.showinfo("Erfolg", f"Benutzer {username} hinzugefügt")
+
+    def admin_delete_user(self):
+        selected = self.user_listbox.curselection()
+        if not selected:
+            messagebox.showwarning("Warnung", "Bitte Benutzer auswählen")
+            return
