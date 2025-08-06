@@ -107,8 +107,12 @@
             {% for dienst, info in status.items() %}
             <tr>
                 <td>{{ dienst }}</td>
-                <td>{{ info.count }}</td>
-                <td>{{ info.icon }}</td>
+                <td>{{ info['count'] }}</td>
+                <td>{{ info['icon'] }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3">Keine Dienste vorhanden.</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -122,6 +126,8 @@
         <select name="dienst" id="dienst" required>
             {% for d in dienste %}
                 <option value="{{ d }}">{{ d }}</option>
+            {% else %}
+                <option disabled>Keine Dienste verfügbar</option>
             {% endfor %}
         </select>
 
@@ -135,8 +141,9 @@
     </form>
 
     <h2>Benutzer hinzufügen</h2>
-    <form method="post">
+    <form method="POST" action="{{ url_for('admin') }}">
         <input type="hidden" name="action" value="add_user" />
+
         <label for="username">Benutzername:</label>
         <input type="text" name="username" id="username" required />
 
@@ -162,6 +169,10 @@
             <tr>
                 <td>{{ username }}</td>
                 <td>{{ "Ja" if user.admin else "Nein" }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="2">Keine Benutzer gefunden.</td>
             </tr>
             {% endfor %}
         </tbody>
