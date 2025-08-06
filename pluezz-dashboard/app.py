@@ -102,6 +102,7 @@ def dashboard():
     status = {dienst: len(accounts.get(dienst, [])) for dienst in dienste}
     return render_template("dashboard.html", status=status, dienste=dienste)
 
+# 🔹 Neue /dienst-Route mit Standardanzeige aller Accounts
 @app.route("/dienst/<dienst>", methods=["GET", "POST"])
 def dienst(dienst):
     if "user" not in session:
@@ -111,7 +112,7 @@ def dienst(dienst):
 
     accounts = load_accounts()
     dienst_accounts = accounts.get(dienst, [])
-    ausgewaehlte_accounts = []
+    ausgewaehlte_accounts = dienst_accounts[:]  # Standard: Alle anzeigen
 
     if request.method == "POST":
         if "abrufen" in request.form:
@@ -134,12 +135,10 @@ def dienst(dienst):
             except (ValueError, IndexError):
                 flash("Fehler beim Löschen.")
             try:
-                zuletzt_anzahl = int(request.form.get("anzahl_alt", 1))
+                zuletzt_anzahl = int(request.form.get("anzahl_alt", len(dienst_accounts)))
                 ausgewaehlte_accounts = dienst_accounts[:zuletzt_anzahl]
             except ValueError:
                 ausgewaehlte_accounts = dienst_accounts
-    else:
-        ausgewaehlte_accounts = []
 
     return render_template("dienst.html", dienst=dienst, accounts=ausgewaehlte_accounts)
 
@@ -172,6 +171,7 @@ def delete_account():
 
     return redirect(url_for("dashboard"))
 
+# 🔹 Angepasste /add_account-Route mit Weiterleitung zur Dienstseite
 @app.route("/add_account", methods=["POST"])
 def add_account():
     if "user" not in session:
@@ -194,6 +194,7 @@ def add_account():
         accounts.setdefault(dienst_name, []).append(acc_obj)
         save_accounts(accounts)
         flash(f"Account zu {dienst_name} hinzugefügt.")
+        return redirect(url_for("dienst", dienst=dienst_name))  # direkt zur Diensteseite
     else:
         flash("Bitte Dienst, E-Mail und Passwort korrekt angeben.", "error")
 
