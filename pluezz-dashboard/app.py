@@ -256,3 +256,4 @@ def admin():
                     users[username] = {
                         "password": generate_password_hash(password),
                         "admin": admin
+                    }
