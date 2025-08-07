@@ -3,8 +3,25 @@
   "YouTube-Premium Single Account": [],
   "Crunchyroll Fan Account": [],
   "Crunchyroll Megafan Account": [],
-  "Steam 0-3 Random Games": [],
-  "Steam 4+ Random Games": [],
+  "Steam 0-3 Random Games": [
+    { "email": "lendersnipeeeli6palmer", "password": "V5PI6YD5GTNX405" },
+    { "email": "davemullins90", "password": "9wnrv35n3h" },
+    { "email": "yio7ldtpwfxc8sp3txi9m2", "password": "EVXEISIW0KIB499" },
+    { "email": "quiprodoban1974", "password": "faHI2tfZre1995" },
+    { "email": "FLJIATFdnRfS", "password": "mNgDn5Jd" },
+    { "email": "laecio150", "password": "gta204135" },
+    { "email": "ADXMGB", "password": "Pinklove189!!!" }
+  ],
+  "Steam 4+ Random Games": [
+    { "email": "parham__off__", "password": "PKPK007007" },
+    { "email": "Alitah1381", "password": "king1381" },
+    { "email": "skeepbot28", "password": "Uberhund123" },
+    { "email": "AcousticAlluringJay36", "password": "Keenseed88C6L5A00" },
+    { "email": "RegularOverwroughtOkapi", "password": "Slimjoke18" },
+    { "email": "m9snoipupsik2", "password": "tata1tata123" },
+    { "email": "nerd_omp_adr", "password": "madson245" },
+    { "email": "shjinu1406", "password": "1799101096Tnu" }
+  ],
   "Steam Eurotruck Simulator 2": [],
   "Steam Wallpaper Engine": [],
   "Steam Counter Strike": [],
