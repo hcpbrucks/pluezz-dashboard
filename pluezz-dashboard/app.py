@@ -253,7 +253,13 @@ def admin():
                 if username in users:
                     flash("Benutzername existiert bereits.", "error")
                 else:
-                    users[username] = {
+                                        users[username] = {
                         "password": generate_password_hash(password),
-                        "admin": admin
+                        "admin": admin_flag
                     }
+                    save_users(users)
+                    flash("Benutzer erfolgreich hinzugefügt.")
+            else:
+                flash("Bitte alle Felder ausfüllen.", "error")
+
+    return render_template("admin.html", users=users, status=status)
