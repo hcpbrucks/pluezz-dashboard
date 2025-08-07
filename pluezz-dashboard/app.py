@@ -252,8 +252,8 @@ def admin():
             if username and password:
                 if username in users:
                     flash("Benutzername existiert bereits.", "error")
-                else:
-                                        users[username] = {
+                                else:
+                    users[username] = {
                         "password": generate_password_hash(password),
                         "admin": admin_flag
                     }
